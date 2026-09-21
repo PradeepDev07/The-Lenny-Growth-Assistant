@@ -196,6 +196,6 @@ Initially answered "not sure", then walked through folder/paper analogy and conf
 Cascade deletion maintains relational integrity atomically, and session filtering protects conversation isolation and prompt context windows.
 
 ### Commit
-`feat: add async persistence for sessions and messages with cascade deletion`
+`1a43b35` — `feat: add async persistence for sessions and messages with cascade deletion`
 
 

@@ -262,7 +262,7 @@ Decouple the application from vendor-specific LLM SDKs through a normalized prov
 Adapter normalization protects upstream code from vendor API churn, cascading fallback guarantees resilience, and server-side execution bypasses browser mixed-content policies.
 
 ### Commit
-`feat: add multi-provider LLM layer and task router with cascading fallback`
+`b058c22` — `feat: add multi-provider LLM layer and task router with cascading fallback`
 
 
 

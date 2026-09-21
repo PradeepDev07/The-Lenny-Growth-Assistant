@@ -25,3 +25,20 @@ class EssayResponse(BaseModel):
     content: str
     sources: List[Dict[str, Any]] = Field(default_factory=list)
     model_info: Dict[str, Any] = Field(default_factory=dict)
+
+
+class InteractiveArtifactRequest(BaseModel):
+    topic: str = Field(
+        ...,
+        min_length=2,
+        description="The growth tool, calculator, or interactive framework to generate (e.g. 'Growth Loop Simulator', 'Activation Rate Calculator')"
+    )
+    session_id: Optional[str] = Field(
+        default=None,
+        description="Optional session ID to attach the artifact to"
+    )
+    provider_override: Optional[str] = Field(
+        default=None,
+        description="Optional model provider override ('ollama', 'gemini', 'openrouter')"
+    )
+

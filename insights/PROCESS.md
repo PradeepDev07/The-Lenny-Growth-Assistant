@@ -483,6 +483,82 @@ Structural scaffolding provides autoregressive pacing, and task-based routing ba
 ### Commit
 `9379bf5` — `feat: implement Ship 30 for 30 essay skill engine with structural scaffolding and artifact persistence`
 
+---
+
+## Feature 7 — Sandboxed Interactive Artifact Generation Engine & Security Sandbox
+
+### Goal
+Implement an interactive artifact generation engine that compiles podcast frameworks into standalone, reactive HTML/JS/CSS calculators and tools, securely isolated inside a two-layer defense-in-depth sandbox.
+
+### Requirements
+- Address assignment requirement for interactive artifact generation and sandboxed rendering.
+- Single-file self-contained HTML contract (inline `<style>`, inline vanilla `<script>`, zero remote CDN calls).
+- Grounded in Lenny's Podcast transcripts with citation header: `[Lenny Podcast — Guest Name — Episode Title]`.
+- Route via `task="artifact_generation"` prioritizing cloud models with local Ollama fallback.
+- Stream tokens via SSE (`text/event-stream`).
+- Persist artifact as `ArtifactModel(type="html", ...)`.
+- Security Sandbox:
+  - Raw endpoint `GET /api/artifacts/{id}/raw` serving `text/html`.
+  - HTTP `Content-Security-Policy`: `default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; frame-ancestors 'self' http://localhost:3000 http://127.0.0.1:3000;`.
+  - HTTP `X-Content-Type-Options: nosniff`.
+  - Frontend Iframe contract: `sandbox="allow-scripts"` strictly omitting `allow-same-origin` (setting `origin: "null"`).
+
+### Design
+- `backend/app/skills/interactive.py`: Single-file HTML prompt compiler and SSE generator.
+- `backend/app/routers/skills.py`: Added `POST /api/skills/artifact` and `GET /api/artifacts/{id}/raw`.
+- Two-layer defense-in-depth:
+  - Layer 1 (Vertical Isolation): Iframe null origin prevents child scripts from accessing `window.parent.localStorage` or cookies.
+  - Layer 2 (Horizontal Containment): CSP `connect-src 'none'` physically blocks outbound `fetch`, `XHR`, `WebSocket`, and tracking beacons from exfiltrating calculation inputs.
+
+### Implementation
+- `backend/app/schemas/skill.py`: Added `InteractiveArtifactRequest`.
+- `backend/app/schemas/__init__.py`: Exported `InteractiveArtifactRequest`.
+- `backend/app/skills/interactive.py`: Interactive tool generator and grounding prompt.
+- `backend/app/skills/__init__.py`: Exported interactive skill functions.
+- `backend/app/routers/skills.py`: Added `POST /api/skills/artifact` and `GET /api/artifacts/{id}/raw`.
+- `backend/tests/test_artifacts.py`: 6 automated integration tests.
+
+### Files Changed
+- `backend/app/schemas/skill.py`
+- `backend/app/schemas/__init__.py`
+- `backend/app/skills/interactive.py`
+- `backend/app/skills/__init__.py`
+- `backend/app/routers/skills.py`
+- `backend/tests/test_artifacts.py`
+- `insights/PROCESS.md`
+- `insights/DECISION.md`
+- `insights/QA.md`
+
+### Tests
+- `test_interactive_artifact_prompt_compilation`: Verified single-file contract, zero-network sandbox rules, and podcast citations.
+- `test_interactive_artifact_prompt_empty_chunks`: Verified archive refusal prompt when no chunks match.
+- `test_generate_interactive_artifact_endpoint_and_csp_headers`: Verified SSE streaming, code fence stripping, DB persistence as type="html", and CSP headers on `/raw`.
+- `test_raw_endpoint_renders_markdown_safely`: Verified markdown raw preview container with identical CSP.
+- `test_generate_artifact_refusal_on_irrelevant_topic`: Verified refusal on unrelated requests.
+- `test_artifact_raw_404_on_invalid_id`: Verified structured 404 response on missing artifact.
+- Full test suite: 33/33 tests passed in 1.14s.
+
+### Verification
+- Pytest verified complete end-to-end integration and mock streaming.
+
+### Understanding Gate
+1. Why specifying `sandbox="allow-scripts"` while strictly omitting `allow-same-origin` is essential, and what runtime error occurs on parent access.
+2. How Content Security Policy (`connect-src 'none'`) blocks outward data exfiltration even if origin isolation is intact.
+
+### My Answer
+1. Need JS for interactive dynamic response; omit allow-same-origin so iframe doesn't have direct access to parent container.
+2. Not sure.
+
+### Correction / Clarification
+- Explained that omitting `allow-same-origin` assigns opaque `origin: "null"`, triggering `DOMException: Blocked a frame with origin "null" from accessing a cross-origin frame`.
+- Explained the dual threat model: origin isolation blocks inward privilege escalation, while `CSP: connect-src 'none'` and `img-src data:` block outward network exfiltration of confidential metrics entered into calculators.
+
+### Final Understanding
+Two-layer defense-in-depth: `origin: null` establishes vertical privilege isolation, while `CSP: connect-src 'none'` guarantees zero outward network leakage.
+
+### Commit
+`feat: implement sandboxed interactive artifact generation engine with defense-in-depth CSP`
+
 
 
 

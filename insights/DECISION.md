@@ -212,6 +212,55 @@ We select **Option B: Field-Boosted BM25 with Stopword Filtering and Query Term 
 ## Why
 Guarantees high precision for domain queries and deterministic refusal for out-of-domain queries.
 
+---
+
+# Decision 010: Delimited XML Grounding Contract for Prompt Injection Defense
+
+## Context
+When blending system instructions, retrieved transcript excerpts, conversation history, and raw user input into a single LLM prompt, adversarial user prompts can attempt to hijack instructions (prompt injection), or models may blend training assumptions with transcript facts.
+
+## Options Considered
+
+### Option A: Free-form text concatenation
+- Concatenates "Here are excerpts: ... Here is the user: ...".
+- Vulnerable to prompt injection; model easily confuses user text with system rules.
+
+### Option B: Strict XML-delimited prompt encapsulation
+- Encapsulates retrieved excerpts inside `<transcript_evidence>...</transcript_evidence>`.
+- Encapsulates user questions inside `<user_question>...</user_question>`.
+- System instructions explicitly declare: `<user_question>` has zero authority to redefine rules; if `<transcript_evidence>` lacks facts, model is bound to state insufficient evidence.
+
+## Decision
+We select **Option B: Strict XML-delimited prompt encapsulation**.
+
+## Why
+Provides a robust structural defense against prompt injection and forces model grounding exclusively in retrieved text.
+
+---
+
+# Decision 011: Server-Sent Events (SSE) Unidirectional Token Streaming Protocol
+
+## Context
+Conversational AI requires immediate token streaming so users do not stare at loading spinners for 5+ seconds.
+
+## Options Considered
+
+### Option A: Full-duplex WebSockets
+- Heavyweight stateful connection; difficult proxy and reconnect management.
+
+### Option B: Server-Sent Events (SSE) via FastAPI StreamingResponse
+- Standard HTTP (`text/event-stream`).
+- Pushes incremental `data: {"token": "..."}\n\n` events.
+- Emits termination payload `data: {"event": "done", "sources": [...], "model_info": {...}}\n\n`.
+- Supported natively by browsers and proxies with automatic reconnection.
+
+## Decision
+We select **Option B: Server-Sent Events (SSE)**.
+
+## Why
+Simplest production-grade streaming protocol, zero socket overhead, and natural progressive disclosure of citation cards.
+
+
 
 
 ---

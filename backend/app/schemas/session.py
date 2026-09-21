@@ -56,3 +56,10 @@ class SessionDetailResponse(BaseModel):
     user_metadata: Dict[str, Any] = Field(default_factory=dict)
     messages: List[MessageResponse] = Field(default_factory=list)
 
+
+class ChatRequest(BaseModel):
+    session_id: str = Field(..., description="ID of the conversation session")
+    message: str = Field(..., min_length=1, description="User's prompt or question")
+    provider_override: Optional[str] = Field(default=None, description="Optional provider override: 'ollama', 'gemini', or 'openrouter'")
+
+

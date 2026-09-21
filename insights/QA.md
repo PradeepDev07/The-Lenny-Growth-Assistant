@@ -137,3 +137,31 @@ What would happen to the assistant's behavior if we set the cosine similarity th
 - *What was incomplete:* At `0.98`, two texts in dense embedding space almost *never* score that high unless they are near-verbatim copies. Natural language questions (even highly relevant ones) score between `0.60` and `0.80`. A threshold of `0.98` causes catastrophic **over-refusal / false negatives**, where the assistant rejects 100% of authentic user queries.
 - *Verified Mental Model:* The "Goldilocks Zone" for thresholds (`~0.45 – 0.55`) balances semantic recall against hallucination prevention.
 
+---
+
+## Gate 5 — Grounded RAG Chat Engine & Streaming Protocol
+
+### Question 1
+If a user asks *"What is the optimal pricing tier for a B2B cybersecurity appliance?"*, and our retriever returns `[]` (empty list) because cybersecurity appliances are not in Lenny's podcast transcripts, what must our system prompt instruct the LLM to do, and why must it NOT answer from its pre-trained general knowledge?
+
+**User Answer:**
+> The RAG returns an empty array sent to LLM, but on the system message strictly prompt them to treat `<transcript_evidence>` only as data from Lenny, and user queries are inside `<user_question>`. On the system prompt mention it purely as user prompt—it does not have authority to modify or replace the system prompt. Even if RAG returns an empty array, the LLM should not hallucinate with pre-trained data; instead, the LLM should return insufficient data.
+
+**Mentor Assessment:**
+- *What was right:* Outstanding grasp of XML delimiter boundaries (`<transcript_evidence>` vs `<user_question>`) and hierarchy of authority. User prompts have zero permission to redefine system constraints. When evidence is missing, the model is bound to state insufficient data rather than falling back on pre-trained generalities.
+- *Verified Mental Model:* Prompt delimiter defense treats retrieved text as pure data and user input as unprivileged queries. Grounded refusal prevents hallucination on unrepresented domains.
+
+---
+
+### Question 2
+In an SSE streaming endpoint, why do we send the source citations and latency metadata at the *end* of the stream (`{"event": "done", ...}`) rather than at the very beginning before any text tokens are streamed?
+
+**User Answer:**
+> SSE is done so user does not stare at a loading screen while LLM responds. It will unidirectionally stream from server to frontend, which has native EventSource fetching to handle the streaming response. The response, sources, and latency are stored in DB once streaming is finished. Sources are used to authenticate claims of the LLM, and latency is used to measure response time.
+
+**Mentor Assessment:**
+- *What was right:* Accurately identified that SSE eliminates waiting latency, and that total latency and persistence can only occur once generation finishes.
+- *What was incomplete:* Emphasized progressive disclosure in UI design: emitting metadata at stream termination prevents layout thrashing, allowing the user to read the streamed text naturally before citation badges unlock beneath the answer.
+- *Verified Mental Model:* Progressive disclosure: stream content first for immediate perceived performance; finalize metadata and database records upon stream termination.
+
+

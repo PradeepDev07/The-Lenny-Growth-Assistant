@@ -59,8 +59,9 @@ class OllamaProvider(BaseLLMProvider):
     ) -> LLMResponse:
         payload = self._build_payload(messages, system_prompt, stream=False, temperature=temperature, max_tokens=max_tokens)
         start_time = time.perf_counter()
+        timeout = httpx.Timeout(connect=20.0, read=180.0, write=30.0, pool=30.0)
 
-        async with httpx.AsyncClient(timeout=90.0) as client:
+        async with httpx.AsyncClient(timeout=timeout) as client:
             resp = await client.post(f"{self.base_url}/api/chat", json=payload)
             if resp.status_code != 200:
                 raise RuntimeError(f"Ollama API returned HTTP {resp.status_code}: {resp.text}")
@@ -90,8 +91,9 @@ class OllamaProvider(BaseLLMProvider):
         max_tokens: int = 2048
     ) -> AsyncIterator[str]:
         payload = self._build_payload(messages, system_prompt, stream=True, temperature=temperature, max_tokens=max_tokens)
+        timeout = httpx.Timeout(connect=20.0, read=180.0, write=30.0, pool=30.0)
 
-        async with httpx.AsyncClient(timeout=90.0) as client:
+        async with httpx.AsyncClient(timeout=timeout) as client:
             async with client.stream("POST", f"{self.base_url}/api/chat", json=payload) as response:
                 if response.status_code != 200:
                     error_text = await response.aread()
@@ -107,3 +109,4 @@ class OllamaProvider(BaseLLMProvider):
                             yield token
                     except json.JSONDecodeError:
                         continue
+

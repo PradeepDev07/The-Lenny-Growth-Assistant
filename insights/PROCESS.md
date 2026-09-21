@@ -331,6 +331,77 @@ Vector search navigates multi-dimensional space, and threshold calibration preve
 ### Commit
 `1888d1e` — `feat: add transcript chunking, boosted vector retrieval, and ingestion CLI`
 
+---
+
+## Feature 5 — Grounded RAG Chat Engine with Streaming SSE & Source Citations
+
+### Goal
+Implement end-to-end grounded conversational RAG using Server-Sent Events (SSE), XML prompt delimiter boundaries, source attribution, and conversation persistence.
+
+### Requirements
+- Address assignment requirement for grounded RAG conversational assistant.
+- Real-time token streaming via SSE (`text/event-stream`).
+- XML-delimited prompt compiler to prevent prompt injection and guarantee evidence grounding.
+- Inline citations in `[Lenny Podcast — Guest — Episode Title]` format.
+- Graceful refusal when retrieval returns empty array `[]` ("not covered in archive").
+- Persist user message immediately and assistant message with sources upon stream completion.
+
+### Design
+- `backend/app/rag/engine.py`: XML prompt compiler (`<transcript_evidence>` vs `<user_question>`), RAG orchestrator, and streaming generator.
+- `backend/app/routers/chat.py`: `POST /api/chat` returning `StreamingResponse`.
+- Streaming protocol: yields `data: {"token": "..."}\n\n` and terminates with `data: {"event": "done", "sources": [...], "model_info": {...}}\n\n`.
+- Post-stream database finalization: writes assistant response, source citations, and telemetry into `messages` and `routing_logs`.
+
+### Implementation
+- `backend/app/schemas/session.py`: Added `ChatRequest`.
+- `backend/app/rag/engine.py`: Grounded RAG streaming pipeline.
+- `backend/app/rag/__init__.py`: Package exports.
+- `backend/app/routers/chat.py`: SSE endpoint with session validation.
+- `backend/app/routers/__init__.py`: Export chat router.
+- `backend/app/main.py`: Registered `/api/chat`.
+- `backend/tests/test_chat.py`: Automated integration tests.
+
+### Files Changed
+- `backend/app/schemas/session.py`
+- `backend/app/rag/__init__.py`
+- `backend/app/rag/engine.py`
+- `backend/app/routers/chat.py`
+- `backend/app/routers/__init__.py`
+- `backend/app/main.py`
+- `backend/tests/test_chat.py`
+- `insights/PROCESS.md`
+- `insights/DECISION.md`
+- `insights/QA.md`
+
+### Tests
+- `test_build_grounding_prompt_compilation`: Verified XML delimiter formatting.
+- `test_build_grounding_prompt_empty_chunks`: Verified empty evidence block formatting.
+- `test_chat_non_existent_session_returns_404`: Verified 404 with structured error.
+- `test_chat_grounded_streaming_and_persistence`: Verified SSE token streaming, source attribution, and message persistence.
+- `test_chat_refusal_when_retrieval_empty`: Verified refusal text and empty sources on unrelated query.
+- All 21 tests in suite passed.
+
+### Verification
+- Executed live streaming test against host Ollama `llama3.2:3b`.
+
+### Understanding Gate
+1. What must the system prompt instruct the model to do when retrieval returns `[]`?
+2. Why send source citations and latency at the end of the SSE stream?
+
+### My Answer
+1. Delimiters treat evidence as data and user prompt as query; if empty, return insufficient data rather than hallucinating from pre-trained weights.
+2. SSE avoids waiting spinners; latency and sources are only finalized after stream completion.
+
+### Correction / Clarification
+- Highlighted progressive disclosure in UI design: sending citations at the end prevents layout shifts while reading streamed tokens.
+
+### Final Understanding
+XML delimiter isolation establishes authority boundaries, and SSE streaming with end-of-stream finalization balances latency with structured metadata delivery.
+
+### Commit
+`feat: implement grounded RAG chat with streaming SSE and source citations`
+
+
 
 
 

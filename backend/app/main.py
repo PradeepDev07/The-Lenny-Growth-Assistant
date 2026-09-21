@@ -11,6 +11,7 @@ from backend.app.schemas.health import HealthResponse, PublicConfigResponse, Pro
 from backend.app.db.session import init_db, async_session_factory
 from backend.app.routers.sessions import router as sessions_router
 from backend.app.routers.chat import router as chat_router
+from backend.app.routers.skills import router as skills_router
 
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
@@ -59,6 +60,7 @@ app.add_middleware(
 # Include routers
 app.include_router(sessions_router)
 app.include_router(chat_router)
+app.include_router(skills_router)
 
 
 

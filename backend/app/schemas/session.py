@@ -63,3 +63,16 @@ class ChatRequest(BaseModel):
     provider_override: Optional[str] = Field(default=None, description="Optional provider override: 'ollama', 'gemini', or 'openrouter'")
 
 
+class ArtifactResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    session_id: str
+    message_id: Optional[str] = None
+    type: str  # "markdown", "html"
+    title: str
+    content: str
+    model_info: Dict[str, Any] = Field(default_factory=dict)
+    created_at: datetime
+
+

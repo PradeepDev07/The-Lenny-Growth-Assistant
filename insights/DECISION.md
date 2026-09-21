@@ -309,3 +309,28 @@ We select **Option B: Dedicated Async Repository Layer**.
 ## Why
 Clean separation of concerns, testability, and centralized SQL query maintenance.
 
+---
+
+# Decision 009: Ship 30 for 30 Structural Prompt Scaffolding & Artifact Decoupling
+
+## Context
+Small local models (~3B parameters) lack working memory to pace themselves for long-form ~1,250-word essays and naturally collapse into 200–300 word summaries when given open-ended instructions. Furthermore, essay generation takes significantly longer than interactive chat (1,800 tokens vs 200 tokens) and produces self-contained editorial output that users need to save, copy, and inspect independently of conversational chat bubbles.
+
+## Options Considered
+
+### Option A: Open-ended chat prompt ("Write a 1250-word essay about...")
+- Fails on small models due to premature token convergence.
+- Treats essay as normal chat messages without distinct artifact lifecycle.
+
+### Option B: Hierarchical 6-Stage Scaffolding with Dual Persistence (Message + ArtifactModel)
+- Define a 6-stage compositional scaffolding: Hook (1 sentence), 1-3-1 Cadence, Narrative, Core Framework Breakdown (bulleted with inline citations), Practical Application (3 Takeaways), and Anchor Conclusion.
+- Route via `task="essay_generation"` prioritizing high-throughput cloud models (`gemini` -> `openrouter` -> `ollama`) to prevent 70-second GPU thrashing on 8GB host RAM.
+- Stream tokens via SSE and atomically persist the completed essay as an `ArtifactModel` record (`type="markdown"`), enabling the frontend split-pane view (chat on left, rendered artifact on right).
+
+## Decision
+We select **Option B: Hierarchical 6-Stage Scaffolding with Dual Persistence**.
+
+## Why
+Prevents prompt collapsing, bounds local hardware usage, guarantees citation grounding, and generates first-class artifacts ready for distribution.
+
+

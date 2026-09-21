@@ -164,4 +164,34 @@ In an SSE streaming endpoint, why do we send the source citations and latency me
 - *What was incomplete:* Emphasized progressive disclosure in UI design: emitting metadata at stream termination prevents layout thrashing, allowing the user to read the streamed text naturally before citation badges unlock beneath the answer.
 - *Verified Mental Model:* Progressive disclosure: stream content first for immediate perceived performance; finalize metadata and database records upon stream termination.
 
+---
 
+## Gate 6 — Ship 30 for 30 Essay Skill Engine & Structural Scaffolding
+
+### Question 1
+When instructing a local 3B model (`llama3.2:3b`) to produce a structured, ~1,250-word "Ship 30 for 30" essay with strict sections (Hook, 1-3-1 cadence, Narrative, Framework breakdown, 3 Actionable Takeaways), why do smaller models often default to short 200–300 word summaries if given a simple one-line prompt like *"Write a 1250-word essay about growth loops"*, and how does explicit section-by-section structural scaffolding in the prompt force the model to meet depth and word count requirements?
+
+**User Answer:**
+> 1.1 small model has low context memory by default if we dont give an structure prompt it will give like (200-300).
+> 1.2 by explicit prompt the system prompt it will generate a response in proper structure.
+
+**Mentor Assessment:**
+- *What was right:* Accurately identified that without structural prompt constraints, smaller models default to brief 200–300 word conversational answers, and that explicit system prompting forces structural adherence.
+- *What was incomplete:* Clarified the transformer mechanics: LLMs are autoregressive next-token predictors without an internal word counter or lookahead planning mechanism. When given an open-ended instruction like *"write 1,250 words"*, the attention heads trigger early concluding tokens as soon as the core idea is mentioned. Breaking the prompt into discrete, sequential sub-sections (Hook → 1-3-1 → Narrative → 4 Framework points → 3 Takeaways) converts one massive generation task into bite-sized milestones, keeping the model generating depth across the full length.
+- *Verified Mental Model:* Structural scaffolding acts as an external cognitive map for autoregressive LLMs, preventing premature generation termination.
+
+---
+
+### Question 2
+In our `TaskRouter`, why did we configure the priority chain for `retrieval_qa` to prefer local Ollama first (`["ollama", "gemini", "openrouter"]`), but for `essay_generation` we prefer cloud models first with local Ollama as fallback (`["gemini", "openrouter", "ollama"]`)? What are the specific hardware (RAM, token throughput, time-to-first-token, context window) and quality tradeoffs between generating a 150-word chat answer vs an 1,800-token long-form essay on an 8 GB M1 Mac?
+
+**User Answer:**
+> Due to low RAM memory, if we run 8B model it will swap OOM and make the system lag; due to low memory, context memory is also affected.
+
+**Mentor Assessment:**
+- *What was right:* Correctly recognized that host RAM constraints limit local model size and context capacity.
+- *What was incomplete:* Clarified the latency and generation duration math:
+  1. **Chat (`retrieval_qa`)**: ~150 words (~200 tokens). On local `llama3.2:3b` running at ~30 tokens/sec, this generates in **5–6 seconds**. It is free, completely private, and delivers instant responsiveness for quick queries.
+  2. **Essay (`essay_generation`)**: ~1,250 words (~1,800 tokens). On local hardware, 1,800 tokens at 30 tokens/sec takes **60 to 75 seconds** of continuous 100% GPU/Neural Engine computation, heating the machine and causing noticeable user wait times. In contrast, cloud models (Gemini Flash) stream at 100+ tokens/sec (~15 seconds), have vast context windows (1M+ tokens), and exhibit richer vocabulary and narrative pacing.
+  3. **Attention KV Cache Growth**: During long generations, the KV cache grows in unified RAM. Cloud routing offloads compute while preserving local Ollama as a zero-cost, offline-safe fallback if API keys or internet are unavailable.
+- *Verified Mental Model:* Short interactive Q&A thrives on local edge compute; long-form generative synthesis prioritizes high-throughput cloud models with local fallback.

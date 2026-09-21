@@ -401,6 +401,88 @@ XML delimiter isolation establishes authority boundaries, and SSE streaming with
 ### Commit
 `8d5b90c` — `feat: implement grounded RAG chat with streaming SSE and source citations`
 
+---
+
+## Feature 6 — Ship 30 for 30 Essay-Writing Skill Engine
+
+### Goal
+Implement a dedicated skill engine that transforms Lenny podcast insights into structured, publication-ready digital essays (~1,250 words) adhering to the Ship 30 for 30 atomic writing methodology.
+
+### Requirements
+- Address assignment requirement for Ship 30 for 30 essay generation.
+- Strict 6-stage compositional scaffolding:
+  1. Hook (1 provocative opening sentence)
+  2. 1-3-1 Cadence (short assertion, 3 tension lines, transition)
+  3. PM / Founder Observed Narrative (2-3 paragraphs)
+  4. Core Framework Breakdown (bulleted, bold headlines, grounded with inline citations)
+  5. Practical Application: 3 Actionable Takeaways (Monday morning execution)
+  6. Anchor Conclusion (memorable rule of thumb)
+- Topic retrieval: vector search finds relevant podcast excerpts to ground claims.
+- Cloud priority routing via `task="essay_generation"` with automatic local Ollama fallback.
+- Stream tokens via SSE (`text/event-stream`).
+- Dual persistence: saves both conversational message and persistent `ArtifactModel` record (`type="markdown"`).
+- Artifact inspection endpoints: `GET /api/artifacts/{id}` and `GET /api/sessions/{id}/artifacts`.
+
+### Design
+- `backend/app/skills/ship30.py`: Structural prompt compiler and SSE generator.
+- `backend/app/schemas/skill.py`: Pydantic models `EssayRequest`, `EssayResponse`.
+- `backend/app/routers/skills.py`: `POST /api/skills/essay`, `GET /api/artifacts/{id}`, `GET /api/sessions/{id}/artifacts`.
+- `backend/app/db/repository.py`: Added `add_artifact`, `get_artifacts`, and `get_artifact`.
+
+### Implementation
+- `backend/app/schemas/skill.py`: Request/response models.
+- `backend/app/schemas/session.py`: Added `ArtifactResponse`.
+- `backend/app/skills/ship30.py`: Ship 30 prompt builder and streaming pipeline.
+- `backend/app/skills/__init__.py`: Package exports.
+- `backend/app/routers/skills.py`: FastAPI routes for skills and artifacts.
+- `backend/app/routers/__init__.py`: Registered skills router.
+- `backend/app/main.py`: Included `skills_router`.
+- `backend/tests/test_skills.py`: 6 automated integration tests.
+
+### Files Changed
+- `backend/app/schemas/session.py`
+- `backend/app/schemas/skill.py`
+- `backend/app/skills/__init__.py`
+- `backend/app/skills/ship30.py`
+- `backend/app/routers/skills.py`
+- `backend/app/routers/__init__.py`
+- `backend/app/main.py`
+- `backend/app/db/repository.py`
+- `backend/tests/test_skills.py`
+- `insights/PROCESS.md`
+- `insights/DECISION.md`
+- `insights/QA.md`
+
+### Tests
+- `test_ship30_prompt_compilation`: Verified all 6 structural stages, citation format, and XML delimiters.
+- `test_ship30_prompt_empty_chunks`: Verified refusal marker on empty evidence.
+- `test_generate_essay_endpoint_streaming_and_artifact_persistence`: Verified SSE streaming, DB artifact creation, and artifact retrieval endpoints.
+- `test_generate_essay_auto_creates_session`: Verified session auto-creation when session_id is omitted.
+- `test_generate_essay_refusal_on_unrelated_topic`: Verified refusal without artifact generation on out-of-domain queries.
+- `test_generate_essay_non_existent_session_returns_404`: Verified 404 response on invalid session ID.
+- Full test suite: 27/27 tests passed in 0.69s.
+
+### Verification
+- Pytest verified complete end-to-end integration and mock streaming.
+
+### Understanding Gate
+1. Why smaller models collapse to 200–300 words without scaffolding, and how step-by-step XML directives prevent it.
+2. Hardware and quality tradeoffs between short Q&A (local Ollama) and long essays (cloud priority with local fallback).
+
+### My Answer
+1. Small model has low context memory by default; without structured prompt it produces 200-300 words; explicit prompt generates proper structure.
+2. 8B model swaps and causes lag on low RAM; context memory is affected.
+
+### Correction / Clarification
+- Clarified transformer autoregressive token prediction: without explicit sub-task checkpoints, attention heads trigger premature concluding tokens.
+- Quantified the generation time tradeoff: 1,800 tokens locally takes ~60-75s of continuous GPU saturation vs ~15s on cloud, making cloud routing with offline local fallback optimal.
+
+### Final Understanding
+Structural scaffolding provides autoregressive pacing, and task-based routing balances local privacy for chat against cloud throughput for long-form synthesis.
+
+### Commit
+`feat: implement Ship 30 for 30 essay skill engine with structural scaffolding and artifact persistence`
+
 
 
 

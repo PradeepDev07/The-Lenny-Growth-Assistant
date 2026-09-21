@@ -138,6 +138,60 @@ class SessionRepository:
         return list(result.scalars().all())
 
     @staticmethod
+    async def add_artifact(
+        db: AsyncSession,
+        session_id: str,
+        type: str,
+        title: str,
+        content: str,
+        message_id: Optional[str] = None,
+        model_info: Optional[Dict[str, Any]] = None
+    ) -> ArtifactModel:
+        """
+        Creates and persists an artifact associated with a session.
+        """
+        artifact = ArtifactModel(
+            session_id=session_id,
+            message_id=message_id,
+            type=type,
+            title=title,
+            content=content,
+            model_info=model_info or {}
+        )
+        db.add(artifact)
+        await db.flush()
+        await db.refresh(artifact)
+        return artifact
+
+    @staticmethod
+    async def get_artifacts(
+        db: AsyncSession,
+        session_id: str
+    ) -> List[ArtifactModel]:
+        """
+        Fetches all artifacts created within a session.
+        """
+        query = (
+            select(ArtifactModel)
+            .where(ArtifactModel.session_id == session_id)
+            .order_by(ArtifactModel.created_at.asc())
+        )
+        result = await db.execute(query)
+        return list(result.scalars().all())
+
+    @staticmethod
+    async def get_artifact(
+        db: AsyncSession,
+        artifact_id: str
+    ) -> Optional[ArtifactModel]:
+        """
+        Fetches a single artifact by ID.
+        """
+        query = select(ArtifactModel).where(ArtifactModel.id == artifact_id)
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
     async def log_routing(
         db: AsyncSession,
         task: str,
@@ -156,3 +210,4 @@ class SessionRepository:
         db.add(entry)
         await db.flush()
         return entry
+

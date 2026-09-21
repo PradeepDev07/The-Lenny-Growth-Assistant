@@ -198,4 +198,71 @@ Cascade deletion maintains relational integrity atomically, and session filterin
 ### Commit
 `1a43b35` — `feat: add async persistence for sessions and messages with cascade deletion`
 
+---
+
+## Feature 3 — Multi-Provider LLM Abstraction Layer & Task-Based Router
+
+### Goal
+Decouple the application from vendor-specific LLM SDKs through a normalized provider adapter interface and a task-based router supporting cascading fallback to local Ollama with audit telemetry.
+
+### Requirements
+- Address assignment requirement for multi-provider support: Google Gemini, OpenRouter, and local Ollama.
+- Normalized interface returning standardized `LLMResponse` and token streams.
+- Task-based model routing (`intent_routing`, `retrieval_qa`, `essay_generation`, `artifact_generation`, `offline_demo_mode`).
+- Graceful cascading fallback on network timeout, 429 quota limits, or missing API keys.
+- Audit logging of model latency and fallback flags into `routing_logs`.
+
+### Design
+- Abstract base class `BaseLLMProvider` defining `generate(...)` and `stream(...)`.
+- `OllamaProvider`: Native REST client for `/api/chat` with non-streaming and streaming NDJSON parsing.
+- `GeminiProvider`: Google Gemini direct REST client for high-context RAG Q&A.
+- `OpenRouterProvider`: OpenAI-compatible multi-model client for Claude 3.7 / GPT-4o essay generation.
+- `TaskRouter`: Maps tasks to prioritized provider sequences and cascades on failure.
+
+### Implementation
+- `backend/app/llm/base.py`: `LLMMessage`, `LLMResponse`, `BaseLLMProvider`.
+- `backend/app/llm/ollama_provider.py`: Local Ollama adapter.
+- `backend/app/llm/gemini_provider.py`: Google Gemini adapter.
+- `backend/app/llm/openrouter_provider.py`: OpenRouter multi-model adapter.
+- `backend/app/llm/router.py`: `TaskRouter` and global `model_router` singleton.
+- `backend/app/llm/__init__.py`: Export LLM layer.
+- `backend/tests/test_llm_providers.py`: Automated tests.
+
+### Files Changed
+- `backend/app/llm/__init__.py`
+- `backend/app/llm/base.py`
+- `backend/app/llm/ollama_provider.py`
+- `backend/app/llm/gemini_provider.py`
+- `backend/app/llm/openrouter_provider.py`
+- `backend/app/llm/router.py`
+- `backend/tests/test_llm_providers.py`
+
+### Tests
+- `test_llm_response_normalization`: Verifies standard contract fields.
+- `test_provider_availability_checks`: Verifies availability logic based on keys.
+- `test_task_router_chain_order`: Asserts proper priority chains per task.
+- `test_cascading_fallback_and_telemetry`: Simulated primary provider failure, verified automatic fallback to local tier with `fallback_used: True`, and verified DB audit log written to `routing_logs`.
+- All 10 tests passed via pytest.
+
+### Verification
+- Executed live inference test against host Ollama daemon: generated real tokens with 1364ms latency and normalized `LLMResponse`.
+
+### Understanding Gate
+1. Why does returning a standardized `LLMResponse` matter to the layers sitting above the LLM?
+2. If the app is served over HTTPS in production, how can it call an HTTP Ollama daemon without browser mixed-content blocks?
+
+### My Answer
+1. It standardizes key names and data structure so upstream code doesn't break if vendor payloads differ.
+2. Correctly noted fallback, but raised the production HTTPS / HTTP Ollama mixed-content challenge.
+
+### Correction / Clarification
+- Clarified that the browser never connects to Ollama directly; all Ollama calls occur strictly server-side (FastAPI to loopback or Docker private network). The browser only ever sees encrypted HTTPS to the backend.
+
+### Final Understanding
+Adapter normalization protects upstream code from vendor API churn, cascading fallback guarantees resilience, and server-side execution bypasses browser mixed-content policies.
+
+### Commit
+`feat: add multi-provider LLM layer and task router with cascading fallback`
+
+
 

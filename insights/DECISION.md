@@ -113,7 +113,56 @@ Clean separation of concerns: RAG, the Ship 30 skill, and artifact generation as
 Requires a small initial overhead of interface definition and normalization of tokens/latencies.
 
 ## Alternatives Rejected
-Scattered direct SDK calls were rejected because they prevent automated fallback and make unit testing impossible.
+Direct database queries were rejected because they tightly couple route handling with SQL dialects and make repository-level unit testing impossible.
+
+---
+
+# Decision 006: Abstract Provider Adapter Pattern (Liskov Substitution Principle)
+
+## Context
+Different LLM providers (Ollama, Google Gemini, OpenRouter) format inputs and outputs differently. If route handlers or RAG pipelines call vendor SDKs directly, swapping models or falling back on error requires rewriting business logic.
+
+## Options Considered
+
+### Option A: Direct third-party SDK calls in routes
+- High coupling, leaky abstractions, fragmented error handling.
+
+### Option B: Provider Adapter Pattern with Normalization (`BaseLLMProvider`)
+- Standardized abstract methods: `generate(...)` and `stream(...)`.
+- Standardized return type: `LLMResponse(text, prompt_tokens, completion_tokens, latency_ms, provider, model, fallback_used)`.
+
+## Decision
+We select **Option B: Provider Adapter Pattern with Normalization**.
+
+## Why
+Any provider can be substituted for another without modifying a single line of business or RAG logic.
+
+---
+
+# Decision 007: Task-Based Model Routing with Automated Local Fallback
+
+## Context
+Different tasks have different performance and cost profiles:
+- Long-form Ship 30 essays need strong literary reasoning (Claude 3.7 Sonnet).
+- Grounded RAG Q&A needs huge context windows and low latency (Gemini 2.5 Flash).
+- Offline evaluation requires running on localhost without cloud keys (Ollama).
+
+## Options Considered
+
+### Option A: Static hardcoded model across all endpoints
+- Weak essays if using a fast model, or high latency and cost if using a reasoning model for simple tasks. Zero offline resilience.
+
+### Option B: Rule-based TaskRouter with Cascading Fallback Chains
+- Configurable task mappings with fallback chains: `[Primary Cloud, Secondary Cloud, Local Ollama]`.
+- Network errors or 429 quota exceptions automatically trigger cascade to the next tier without crashing the user request.
+- Every routing event logs telemetry to `routing_logs`.
+
+## Decision
+We select **Option B: Rule-based TaskRouter with Cascading Fallback Chains**.
+
+## Why
+Delivers optimal quality-per-task, zero-crash resilience during internet drops, and complete observability into model latency and fallback rates.
+
 
 ---
 

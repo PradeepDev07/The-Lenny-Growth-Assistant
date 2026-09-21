@@ -62,6 +62,9 @@ The Lenny Growth Assistant is a full-stack, AI-powered system that delivers answ
 - **Relational vs Vector Separation:** Relational DBs store user-specific transactional data (`WHERE session_id = ?`). Vector stores hold static shared reference knowledge (`embedding <=> query`). Mixing them pollutes the vector index.
 - **Cascade Deletion & Referential Integrity:** Relational foreign keys ensure that child records (messages, artifacts) do not become orphaned when parent entities (sessions) are deleted. Configuring `cascade="all, delete-orphan"` coupled with `PRAGMA foreign_keys=ON` guarantees atomic cleanup.
 - **Session Isolation & Context Window Preservation:** Scoping queries strictly to `WHERE session_id = :session_id` prevents prompt cross-contamination between unrelated chats and maximizes available token space for retrieved podcast transcript chunks.
+- **Provider Adapter Normalization:** Normalizing vendor responses into a single `LLMResponse` contract protects upstream business logic, databases, and UI from API drift when switching between Gemini, OpenRouter, and Ollama.
+- **Server-Side Execution vs Browser Mixed-Content:** The client browser strictly communicates via HTTPS with the FastAPI backend. All local Ollama calls execute server-side on localhost or private Docker virtual networks, avoiding browser mixed-content blocks entirely.
 - **Iframe Sandbox Defense:** `sandbox="allow-scripts"` permits client-side interactivity (calculators, charts), while omitting `allow-same-origin` sets `origin: null`, triggering browser `SecurityError` if scripts attempt cross-frame parent DOM or storage access.
 - **Network Resilience:** The model router catches network dropouts and automatically falls back to local Ollama.
+
 

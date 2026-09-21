@@ -481,7 +481,7 @@ Implement a dedicated skill engine that transforms Lenny podcast insights into s
 Structural scaffolding provides autoregressive pacing, and task-based routing balances local privacy for chat against cloud throughput for long-form synthesis.
 
 ### Commit
-`feat: implement Ship 30 for 30 essay skill engine with structural scaffolding and artifact persistence`
+`9379bf5` — `feat: implement Ship 30 for 30 essay skill engine with structural scaffolding and artifact persistence`
 
 
 

@@ -557,7 +557,7 @@ Implement an interactive artifact generation engine that compiles podcast framew
 Two-layer defense-in-depth: `origin: null` establishes vertical privilege isolation, while `CSP: connect-src 'none'` guarantees zero outward network leakage.
 
 ### Commit
-`feat: implement sandboxed interactive artifact generation engine with defense-in-depth CSP`
+`e5cc5fa` — `feat: implement sandboxed interactive artifact generation engine with defense-in-depth CSP`
 
 
 

@@ -329,7 +329,7 @@ Ingest Lenny's Podcast transcripts, segment them into speaker-aware overlapping 
 Vector search navigates multi-dimensional space, and threshold calibration prevents both hallucinations (too low) and over-refusals (too high).
 
 ### Commit
-`feat: add transcript chunking, boosted vector retrieval, and ingestion CLI`
+`1888d1e` — `feat: add transcript chunking, boosted vector retrieval, and ingestion CLI`
 
 
 

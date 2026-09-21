@@ -399,7 +399,7 @@ Implement end-to-end grounded conversational RAG using Server-Sent Events (SSE),
 XML delimiter isolation establishes authority boundaries, and SSE streaming with end-of-stream finalization balances latency with structured metadata delivery.
 
 ### Commit
-`feat: implement grounded RAG chat with streaming SSE and source citations`
+`8d5b90c` — `feat: implement grounded RAG chat with streaming SSE and source citations`
 
 
 

@@ -114,3 +114,50 @@ Requires a small initial overhead of interface definition and normalization of t
 
 ## Alternatives Rejected
 Scattered direct SDK calls were rejected because they prevent automated fallback and make unit testing impossible.
+
+---
+
+# Decision 004: Foreign Key Enforcement & Cascade Deletion in Dual-Engine Setup
+
+## Context
+When a user deletes a session, all associated messages and generated artifacts must be deleted to prevent orphaned records. PostgreSQL enforces foreign keys and cascade rules natively. SQLite, however, disables foreign key enforcement by default on every new connection for backwards compatibility.
+
+## Options Considered
+
+### Option A: Manual application-level deletion
+- Execute `DELETE FROM messages WHERE session_id = ...`, then `DELETE FROM artifacts ...`, then `DELETE FROM sessions ...` manually in Python code.
+- Prone to race conditions, partial deletion on crash, and leaves orphaned records if any step fails.
+
+### Option B: Database-level cascade with SQLite connection hook
+- Declare `ForeignKey("sessions.id", ondelete="CASCADE")` and SQLAlchemy `cascade="all, delete-orphan"` on the models.
+- Attach an event listener `@event.listens_for(engine.sync_engine, "connect")` that immediately issues `PRAGMA foreign_keys=ON` on every SQLite connection.
+
+## Decision
+We select **Option B: Database-level cascade with SQLite connection hook**.
+
+## Why
+It guarantees atomic, single-transaction cascade deletion across both SQLite in development and PostgreSQL in production without manual query bookkeeping.
+
+---
+
+# Decision 005: Async Repository Pattern for Storage Isolation
+
+## Context
+Route handlers in FastAPI could directly query the database via SQLAlchemy `session.execute(select(...))`.
+
+## Options Considered
+
+### Option A: Direct database queries inside router functions
+- Faster to write for 1 or 2 routes.
+- Highly couples HTTP routing and serialization logic with database queries. Makes changing query mechanics (e.g. adding pagination, count subqueries, caching) require editing every route.
+
+### Option B: Dedicated Async Repository Layer (`SessionRepository`)
+- Encapsulates queries, subqueries, and updates inside static async methods.
+- Route handlers only handle request validation, dependency injection, and response mapping.
+
+## Decision
+We select **Option B: Dedicated Async Repository Layer**.
+
+## Why
+Clean separation of concerns, testability, and centralized SQL query maintenance.
+

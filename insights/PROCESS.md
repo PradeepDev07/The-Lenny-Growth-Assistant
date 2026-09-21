@@ -128,5 +128,74 @@ Stand up the foundational HTTP backend with truthful readiness probes (`/health`
 Async non-blocking probes prevent event loop starvation, and strict schema DTOs enforce zero-leakage security boundaries.
 
 ### Commit
-`feat: bootstrap FastAPI app with health and config endpoints`
+`da17ae4` — `feat: bootstrap FastAPI app with health and config endpoints`
+
+---
+
+## Feature 2 — Database Models, Session Persistence & Messaging Endpoints
+
+### Goal
+Implement transactional conversation storage for sessions, chronological messages, source citations, generated artifacts, and routing audit logs, with automatic cascade deletion and dual database engine compatibility.
+
+### Requirements
+- Address assignment requirement for session and message persistence.
+- Models: `Session`, `Message`, `Artifact`, `RoutingLog`.
+- Async engine supporting SQLite (local dev) and PostgreSQL (production).
+- Endpoints: `POST /api/sessions`, `GET /api/sessions`, `GET /api/sessions/{id}`, `DELETE /api/sessions/{id}`, `POST /api/sessions/{id}/messages`.
+- Consistent error responses: `{ "error": { "code": "...", "message": "..." } }`.
+- Active DB connectivity probe in `GET /health` (`SELECT 1`).
+
+### Design
+- SQLAlchemy 2.0 async declarative models with typed `Mapped[...]`.
+- SQLite event listener setting `PRAGMA foreign_keys = ON` on connection so database-level cascade deletion behaves identically to PostgreSQL.
+- Repository pattern (`SessionRepository`) isolating SQL queries and count subqueries from route handlers.
+- Custom FastAPI exception handler for `HTTPException` standardizing error payload schemas.
+
+### Implementation
+- `backend/app/db/session.py`: Async engine, session factory, and `init_db`.
+- `backend/app/models/entities.py`: `SessionModel`, `MessageModel`, `ArtifactModel`, `RoutingLogModel`.
+- `backend/app/schemas/session.py`: Pydantic validation schemas with `ConfigDict(from_attributes=True)`.
+- `backend/app/db/repository.py`: Async repository with cascade deletes, count subqueries, and message ordering.
+- `backend/app/routers/sessions.py`: REST CRUD router.
+- `backend/app/main.py`: Connected router, added active `SELECT 1` probe to `/health`, and registered global `HTTPException` handler.
+- `backend/tests/test_sessions.py`: Integration tests.
+
+### Files Changed
+- `backend/app/db/__init__.py`
+- `backend/app/db/session.py`
+- `backend/app/db/repository.py`
+- `backend/app/models/__init__.py`
+- `backend/app/models/entities.py`
+- `backend/app/schemas/session.py`
+- `backend/app/routers/__init__.py`
+- `backend/app/routers/sessions.py`
+- `backend/app/main.py`
+- `backend/requirements.txt`
+- `backend/tests/test_sessions.py`
+
+### Tests
+- `test_session_lifecycle_and_cascade_deletion`: Full CRUD cycle, verified chronological order, and directly verified 0 orphaned messages after session deletion.
+- `test_add_message_to_non_existent_session_returns_404`: Verified structured error response.
+- All 6 tests passing (4 health + 2 persistence).
+
+### Verification
+- Executed live API test: created session `e6f1c428...`, added message with citations and model info, verified retrieval, and verified `/health` returned `db: True` via live query.
+
+### Understanding Gate
+1. What happens in the database if a user deletes a session and cascade deletion is NOT configured?
+2. Why must message history be queried strictly filtered by `session_id`?
+
+### My Answer
+Initially answered "not sure", then walked through folder/paper analogy and confirmed understanding.
+
+### Correction / Clarification
+- Clarified that without cascade deletion, child records become orphaned ghost data or trigger foreign key violation errors.
+- Clarified that mixing sessions cross-contaminates prompt context and exhausts finite token limits.
+
+### Final Understanding
+Cascade deletion maintains relational integrity atomically, and session filtering protects conversation isolation and prompt context windows.
+
+### Commit
+`feat: add async persistence for sessions and messages with cascade deletion`
+
 

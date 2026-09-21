@@ -38,3 +38,43 @@ Unified memory architecture means CPU, GPU, and all operating system processes c
 
 ### Lesson
 Never blindly assume reference documentation hardware recommendations match the actual physical deployment host. Real software engineering requires matching the architecture to physical hardware boundaries.
+
+---
+
+## Problem 002 — Python 3.12 SQLAlchemy Async Engine Missing `greenlet`
+
+### Symptom
+When running `pytest` with `async_engine`, SQLAlchemy threw:
+`ValueError: the greenlet library is required to use this function. No module named 'greenlet'`.
+
+### Expected
+Smooth async connection using `create_async_engine`.
+
+### Root Cause
+SQLAlchemy's async wrapper bridges Python's async/await event loop with its internal synchronous core using `greenlet`. In Python 3.12, `greenlet` is not bundled by default and must be explicitly installed.
+
+### Fix
+Added `greenlet>=3.0.3` to `backend/requirements.txt` and installed it.
+
+### Lesson
+Async ORM layers often require low-level coroutine switching C-extensions (`greenlet`). Always ensure this dependency is explicitly pinned for Python 3.12 environments.
+
+---
+
+## Problem 003 — SQLite Default Foreign Key Inactivity Breaking Cascade Deletion
+
+### Symptom
+In relational unit tests, deleting a parent session could leave behind child messages in SQLite if FK enforcement is inactive.
+
+### Root Cause
+For backwards compatibility with 1990s databases, SQLite defaults `PRAGMA foreign_keys = OFF` on every new connection. Unless an explicit pragma is run per connection, SQLite completely ignores `ON DELETE CASCADE`.
+
+### Fix
+Attached an event listener `@event.listens_for(engine.sync_engine, "connect")` in `backend/app/db/session.py` that executes `PRAGMA foreign_keys=ON` whenever a SQLite connection is established.
+
+### Verification
+`test_sessions.py` asserts that directly querying the `messages` table after deleting a session returns 0 rows.
+
+### Lesson
+Never assume SQLite behaves like PostgreSQL out of the box. Explicit pragma initialization is mandatory for relational integrity in SQLite.
+

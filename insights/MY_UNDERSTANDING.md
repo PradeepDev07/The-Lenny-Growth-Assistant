@@ -60,5 +60,8 @@ The Lenny Growth Assistant is a full-stack, AI-powered system that delivers answ
 ## Verified Mental Models
 - **Memory & Apple Silicon:** Unified memory means memory is shared across GPU, OS, Docker, and apps. An 8B model requires 4.8GB+ RAM, causing swap thrashing on an 8GB machine. Targeting `llama3.2:3b` (~2.0 GB) guarantees smooth performance and 25-35 t/s generation.
 - **Relational vs Vector Separation:** Relational DBs store user-specific transactional data (`WHERE session_id = ?`). Vector stores hold static shared reference knowledge (`embedding <=> query`). Mixing them pollutes the vector index.
+- **Cascade Deletion & Referential Integrity:** Relational foreign keys ensure that child records (messages, artifacts) do not become orphaned when parent entities (sessions) are deleted. Configuring `cascade="all, delete-orphan"` coupled with `PRAGMA foreign_keys=ON` guarantees atomic cleanup.
+- **Session Isolation & Context Window Preservation:** Scoping queries strictly to `WHERE session_id = :session_id` prevents prompt cross-contamination between unrelated chats and maximizes available token space for retrieved podcast transcript chunks.
 - **Iframe Sandbox Defense:** `sandbox="allow-scripts"` permits client-side interactivity (calculators, charts), while omitting `allow-same-origin` sets `origin: null`, triggering browser `SecurityError` if scripts attempt cross-frame parent DOM or storage access.
 - **Network Resilience:** The model router catches network dropouts and automatically falls back to local Ollama.
+

@@ -64,7 +64,10 @@ The Lenny Growth Assistant is a full-stack, AI-powered system that delivers answ
 - **Session Isolation & Context Window Preservation:** Scoping queries strictly to `WHERE session_id = :session_id` prevents prompt cross-contamination between unrelated chats and maximizes available token space for retrieved podcast transcript chunks.
 - **Provider Adapter Normalization:** Normalizing vendor responses into a single `LLMResponse` contract protects upstream business logic, databases, and UI from API drift when switching between Gemini, OpenRouter, and Ollama.
 - **Server-Side Execution vs Browser Mixed-Content:** The client browser strictly communicates via HTTPS with the FastAPI backend. All local Ollama calls execute server-side on localhost or private Docker virtual networks, avoiding browser mixed-content blocks entirely.
+- **B-Tree vs Vector Space Indexing:** Relational B-Trees index 1-dimensional scalar values for exact matches ($O(\log N)$). Dense vector embeddings map concepts into high-dimensional space where semantic closeness is measured geometrically via angles (Cosine Similarity) or graph traversals (HNSW).
+- **The Similarity Threshold Goldilocks Zone:** Setting the threshold too low (`0.0`) stuffs irrelevant context and induces hallucinations. Setting it too high (`0.98`) causes catastrophic over-refusal because natural language questions rarely match transcript text verbatim. Calibrated thresholds (`~0.45 – 0.55`) cleanly separate relevant evidence from out-of-domain queries.
 - **Iframe Sandbox Defense:** `sandbox="allow-scripts"` permits client-side interactivity (calculators, charts), while omitting `allow-same-origin` sets `origin: null`, triggering browser `SecurityError` if scripts attempt cross-frame parent DOM or storage access.
 - **Network Resilience:** The model router catches network dropouts and automatically falls back to local Ollama.
+
 
 

@@ -163,6 +163,56 @@ We select **Option B: Rule-based TaskRouter with Cascading Fallback Chains**.
 ## Why
 Delivers optimal quality-per-task, zero-crash resilience during internet drops, and complete observability into model latency and fallback rates.
 
+---
+
+# Decision 008: Semantic Dialogue Chunking with Sliding Window Overlap
+
+## Context
+Lenny's Podcast transcripts are long conversational transcripts. Splitting text arbitrarily across characters breaks questions and answers mid-sentence.
+
+## Options Considered
+
+### Option A: Fixed-size character or token chunking without boundary awareness
+- Simple to write.
+- Cuts sentences in half, causing fragmented context and incomplete thoughts in retrieved chunks.
+
+### Option B: Dialogue-aware paragraph chunking with sliding overlap (~1200 chars / ~400–600 tokens, 200 char overlap)
+- Splits on natural paragraph/speaker boundaries.
+- Overlap ensures concepts bridging chunk boundaries are never lost to retrieval.
+- Attaches structured metadata (`episode_id`, `guest`, `title`, `url`, `chunk_index`).
+
+## Decision
+We select **Option B: Dialogue-aware paragraph chunking with sliding overlap**.
+
+## Why
+Preserves conversational integrity, speaker identity, and provides rich citation metadata for grounding.
+
+---
+
+# Decision 009: BM25 Metadata Boosting with Query Term Coverage Guard
+
+## Context
+Plain keyword search treats all words equally. In podcasts, matching a guest name (e.g., "Elena Verna") or an episode title (e.g., "Growth Loops") is much higher signal than a generic word. Furthermore, unconstrained scoring causes queries with common verbs (e.g. "change" in "how to change car fluid") to match unrelated chunks.
+
+## Options Considered
+
+### Option A: Plain BM25 without field weights or stopword filtering
+- Struggles when the user asks for a specific guest by name, and returns false positives on common verbs.
+
+### Option B: Field-Boosted BM25 with Stopword Filtering and Query Term Coverage Guard
+- 2.5x boost for matches in the `guest` field.
+- 1.8x boost for matches in the `source_title` field.
+- Stopword filtering to remove generic English noise words.
+- Query Term Coverage Guard: multi-term queries (3+ terms) must match at least 2 distinct content terms, eliminating single-word lexical flukes.
+- Calibrated similarity threshold (`min_score`): scores below the threshold return `[]` to trigger grounded refusal.
+
+## Decision
+We select **Option B: Field-Boosted BM25 with Stopword Filtering and Query Term Coverage Guard**.
+
+## Why
+Guarantees high precision for domain queries and deterministic refusal for out-of-domain queries.
+
+
 
 ---
 

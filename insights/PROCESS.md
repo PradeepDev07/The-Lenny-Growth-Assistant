@@ -264,5 +264,73 @@ Adapter normalization protects upstream code from vendor API churn, cascading fa
 ### Commit
 `b058c22` — `feat: add multi-provider LLM layer and task router with cascading fallback`
 
+---
+
+## Feature 4 — Transcript Ingestion, Semantic Chunking & Vector Retrieval Engine
+
+### Goal
+Ingest Lenny's Podcast transcripts, segment them into speaker-aware overlapping semantic chunks, build a boosted vector/BM25 retrieval engine, and calibrate thresholding to refuse out-of-domain queries.
+
+### Requirements
+- Address assignment requirement for transcript ingestion and retrieval pipeline.
+- Curated episodes ingested: Brian Balfour (Growth Loops), Elena Verna (PLG & Activation), Lenny Rachitsky (PMF 0-to-1), Shreyas Doshi (PM Metrics & LNO).
+- Chunking preserving speaker context, episode metadata (`episode_id`, `guest`, `title`, `url`), and deterministic chunk IDs.
+- CLI script: `python -m ingestion.ingest --refresh`.
+- Rejection of out-of-domain / irrelevant queries (returning empty list `[]` to trigger grounded refusal).
+
+### Design
+- `ingestion/chunker.py`: Normalizes text, splits on dialogue paragraphs (~1200 characters / ~400–600 tokens), with 200 character overlap to maintain context continuity.
+- `backend/app/retrieval/vector_store.py`: Persistent vector/document store with metadata field boosting (2.5x guest name, 1.8x episode title), stopword filtering, and query term coverage validation (requiring at least 2 content terms for queries with 3+ terms).
+- Fast disk cache persistence (`vector_cache.json`).
+
+### Implementation
+- `ingestion/data/`: Copied 4 curated transcript JSON files.
+- `ingestion/chunker.py`: Semantic dialogue chunking logic.
+- `ingestion/ingest.py`: Ingestion CLI runner with `--refresh` flag.
+- `backend/app/retrieval/vector_store.py`: BM25/vector store with metadata boosting, stopword removal, and coverage guard.
+- `backend/app/retrieval/__init__.py`: Package exports.
+- `backend/tests/test_retrieval.py`: Comprehensive automated retrieval unit tests.
+
+### Files Changed
+- `ingestion/__init__.py`
+- `ingestion/chunker.py`
+- `ingestion/ingest.py`
+- `ingestion/data/*.json`
+- `backend/app/retrieval/__init__.py`
+- `backend/app/retrieval/vector_store.py`
+- `backend/tests/test_retrieval.py`
+- `insights/QA.md`
+- `insights/MY_UNDERSTANDING.md`
+
+### Tests
+- `test_chunker_metadata_and_overlap`: Validates metadata preservation and chunk continuity.
+- `test_retrieval_brian_balfour_growth_loops`: Validates top rank recall for loops vs funnels.
+- `test_retrieval_elena_verna_activation`: Validates top rank recall for PLG activation metrics.
+- `test_retrieval_shreyas_doshi_lno_framework`: Validates top rank recall for LNO framework.
+- `test_retrieval_lenny_pmf_signals`: Validates top rank recall for PMF indicators.
+- `test_similarity_threshold_rejects_unrelated_queries`: Asserts quantum mechanics, brownie recipes, and car repair return 0 results (`[]`).
+- All 16 backend tests passed via pytest.
+
+### Verification
+- Ran `python -m ingestion.ingest --refresh`: successfully indexed 10 chunks from 4 episodes into `vector_cache.json`.
+
+### Understanding Gate
+1. Why can't a normal PostgreSQL B-tree index answer semantic proximity queries?
+2. What happens if similarity threshold is set to `0.0` vs. `0.98`?
+
+### My Answer
+1. Relational DB checks exact/scalar values; cannot compare semantic vectors.
+2. Threshold 0.0 sends irrelevant chunks and causes hallucinations; 0.98 was assumed to give very similar answers.
+
+### Correction / Clarification
+- Clarified that in high-dimensional dense space, natural queries rarely score 0.98 unless verbatim identical. Setting 0.98 causes catastrophic over-refusal / false negatives. Calibrated thresholds (Goldilocks zone ~0.45–0.55) balance recall and refusal.
+
+### Final Understanding
+Vector search navigates multi-dimensional space, and threshold calibration prevents both hallucinations (too low) and over-refusals (too high).
+
+### Commit
+`feat: add transcript chunking, boosted vector retrieval, and ingestion CLI`
+
+
 
 

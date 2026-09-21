@@ -117,7 +117,12 @@ If a user configures a cloud API key, but their internet connection experiences 
 If our transcript chunks are stored as embeddings, why can't a normal PostgreSQL B-tree index answer: *"Which transcript chunk is semantically closest to this user question?"*
 
 **User Answer:**
-*(Pending user response)*
+> Relational DB can check for value in scale or equal (e.g. "ram list"), but it cannot find similar transcripts. Only by converting the transcript into chunks and then into vectors with similarity threshold can we find similar transcripts.
+
+**Mentor Assessment:**
+- *What was right:* Correctly understood that relational DBs / B-trees operate on scalar exact equality (`=`) or 1D range ordering (`<`, `>`), and cannot compare semantic proximity without vector representations.
+- *What was incomplete:* Clarified the geometric dimension: A B-tree is a 1-dimensional ordered tree ($O(\log N)$ on 1 axis). A dense vector embedding is a 384-dimensional point. In 384 dimensions, there is no simple "greater than" or "less than". To find the closest point in 384 dimensions, you need Approximate Nearest Neighbor (ANN) index algorithms like HNSW (Hierarchical Navigable Small World) or exact vector cosine distance calculations.
+- *Verified Mental Model:* B-Trees order 1D scalars; vector search navigates multi-dimensional space via geometric angles and distance metrics.
 
 ---
 
@@ -125,4 +130,10 @@ If our transcript chunks are stored as embeddings, why can't a normal PostgreSQL
 What would happen to the assistant's behavior if we set the cosine similarity threshold to `0.0`? And what would happen if we set it to `0.98`?
 
 **User Answer:**
-*(Pending user response)*
+> If we set it to 0.0 with top_k = 5, it will send the first five chunks which are not very similar to the query, so LLM response would be wrong and hallucination. But if we send 0.98, which is very highly similar to the user's query, we send to LLM and get a related answer.
+
+**Mentor Assessment:**
+- *What was right:* Accurate diagnosis of the low threshold (`0.0`): the retriever returns irrelevant chunks for any query (even chocolate cake), causing prompt stuffing and hallucinations.
+- *What was incomplete:* At `0.98`, two texts in dense embedding space almost *never* score that high unless they are near-verbatim copies. Natural language questions (even highly relevant ones) score between `0.60` and `0.80`. A threshold of `0.98` causes catastrophic **over-refusal / false negatives**, where the assistant rejects 100% of authentic user queries.
+- *Verified Mental Model:* The "Goldilocks Zone" for thresholds (`~0.45 – 0.55`) balances semantic recall against hallucination prevention.
+

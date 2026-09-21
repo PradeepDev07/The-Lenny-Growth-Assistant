@@ -78,3 +78,30 @@ Attached an event listener `@event.listens_for(engine.sync_engine, "connect")` i
 ### Lesson
 Never assume SQLite behaves like PostgreSQL out of the box. Explicit pragma initialization is mandatory for relational integrity in SQLite.
 
+---
+
+## Problem 004 — Lexical Flukes & Stopword Inflation in Retrieval Unit Tests
+
+### Symptom
+When running `test_similarity_threshold_rejects_unrelated_queries`, the unrelated query `"how to change the transmission fluid on a 1998 honda civic"` returned 2 chunks from Brian Balfour's episode instead of returning `[]`.
+
+### Expected
+Out-of-domain automotive queries should score below the threshold and return an empty list.
+
+### Investigation
+- The transcript contains the sentence: *"Lenny: And how do Growth Loops change this dynamic?"*
+- Because the word `"change"` was only in 2 chunks, its Inverse Document Frequency (IDF) was high (~1.48).
+- Naive BM25 awarded ~0.7 score simply because `"change"` matched, despite 5 other critical query terms (`transmission`, `fluid`, `1998`, `honda`, `civic`) having zero presence in the document (query term coverage of only 16%).
+
+### Fix
+Implemented a dual safeguard in `backend/app/retrieval/vector_store.py`:
+1. Comprehensive English stopword filtering (`STOPWORDS`).
+2. Query Term Coverage Guard: for queries with 3+ content terms, a chunk must match at least 2 distinct content terms. If coverage is below this threshold, the score is forced to `0.0`.
+
+### Verification
+Reran pytest: all authentic queries (Brian Balfour, Elena Verna, Shreyas Doshi, Lenny) maintained 100% top-rank precision, while all unrelated queries (quantum mechanics, brownies, car maintenance) returned strictly 0 chunks (`[]`).
+
+### Lesson
+Lexical keyword search without query term coverage guards is prone to single-word accidental matches. Enforcing minimum term coverage for multi-word queries eliminates spurious false-positive retrievals.
+
+

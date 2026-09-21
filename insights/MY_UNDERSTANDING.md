@@ -1,0 +1,64 @@
+# My Understanding of the System (MY_UNDERSTANDING.md)
+
+This document tracks the user's mental model, key architectural lessons learned, verified concepts, and evolving mastery of the system.
+
+---
+
+## System Overview
+The Lenny Growth Assistant is a full-stack, AI-powered system that delivers answers to startup and product growth questions, grounded in transcripts from Lenny's Podcast. It features:
+1. Grounded RAG conversational Q&A with explicit inline source citations.
+2. Ship 30 for 30 essay generation skill with tight structural constraints.
+3. Safe artifact generation (Markdown and sandboxed HTML).
+4. Multi-provider LLM routing: local Ollama for offline demo, Google Gemini for large-context RAG, and OpenRouter for multi-model access.
+
+---
+
+## Request Lifecycle & Data Flow
+
+```
+1. Client POST /api/chat (session_id, message)
+   ↓
+2. Backend validates request & retrieves recent session history (Relational DB)
+   ↓
+3. Intent Router classifies prompt (QA / Essay / Artifact)
+   ↓
+4. If QA or Essay:
+   Query Embedding → Vector Store ANN Search → Top-k Transcript Chunks
+   ↓
+5. Grounding Prompt Assembly (System prompt + Retrieved Chunks + History + Query)
+   ↓
+6. Task Router selects Provider (Cloud Gemini / OpenRouter → Local Ollama fallback)
+   ↓
+7. LLM streams tokens back via Server-Sent Events (text/event-stream)
+   ↓
+8. Client renders text / extracts Artifact into sandboxed <iframe> (origin null)
+   ↓
+9. Backend persists user message, assistant response, source citations, & telemetry
+```
+
+## Backend Architecture
+- Framework: FastAPI (Python 3.12).
+- Key responsibilities: API routing, session management, vector search retrieval, prompt assembly, LLM provider orchestration, and streaming response delivery (via SSE).
+
+## Database & Persistence
+- Schema entities: `sessions`, `messages`, `artifacts`, `routing_logs`.
+- Dual database support: Seamless transition between lightweight embedded SQLite (zero-overhead local testing) and PostgreSQL with `pgvector` (production containerized stack).
+- **Core Principle:** Strict separation between transactional conversation history (deterministic lookups) and transcript embeddings (similarity search).
+
+## RAG Pipeline
+- Transcript ingestion -> Semantic chunking (~500 tokens with overlap) -> Dense vector embedding -> Storage & Indexing -> Vector similarity retrieval -> Grounded prompt construction -> Constrained generation -> Source attribution.
+
+## LLM Provider Layer & Router
+- Provider abstraction (`BaseLLMProvider`) decoupling business logic from vendor SDKs.
+- Task-based routing: Intent Routing, Retrieval QA, Essay Writing, Artifact Generation.
+- Cascading fallback: Primary cloud -> Secondary cloud -> Local Ollama fallback (`llama3.2:3b`).
+
+## Artifact System & Security
+- Two artifact modes: native Markdown and sandboxed HTML.
+- Defense-in-depth security model: Sandboxed `<iframe>` with `sandbox="allow-scripts"` (strictly omitting `allow-same-origin`), assigning an opaque `origin: "null"` that blocks access to `window.parent`, cookies, local storage, and DOM.
+
+## Verified Mental Models
+- **Memory & Apple Silicon:** Unified memory means memory is shared across GPU, OS, Docker, and apps. An 8B model requires 4.8GB+ RAM, causing swap thrashing on an 8GB machine. Targeting `llama3.2:3b` (~2.0 GB) guarantees smooth performance and 25-35 t/s generation.
+- **Relational vs Vector Separation:** Relational DBs store user-specific transactional data (`WHERE session_id = ?`). Vector stores hold static shared reference knowledge (`embedding <=> query`). Mixing them pollutes the vector index.
+- **Iframe Sandbox Defense:** `sandbox="allow-scripts"` permits client-side interactivity (calculators, charts), while omitting `allow-same-origin` sets `origin: null`, triggering browser `SecurityError` if scripts attempt cross-frame parent DOM or storage access.
+- **Network Resilience:** The model router catches network dropouts and automatically falls back to local Ollama.

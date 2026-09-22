@@ -1,0 +1,14 @@
+__pycache__
+*.py[cod]
+*$py.class
+.pytest_cache
+.coverage
+htmlcov
+.venv
+venv
+.git
+.DS_Store
+growth_assistant.db
+*.db
+*.sqlite
+*.sqlite3

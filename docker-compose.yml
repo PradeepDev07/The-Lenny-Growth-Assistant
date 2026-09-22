@@ -1,0 +1,79 @@
+services:
+  # PostgreSQL Relational Database with pgvector extension
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: lenny-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: lenny_assistant
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d lenny_assistant"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lenny-network
+
+  # FastAPI Backend Application Service
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: lenny-backend
+    restart: unless-stopped
+    environment:
+      - APP_NAME=The Lenny Growth Assistant
+      - APP_VERSION=1.0.0
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/lenny_assistant
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - OLLAMA_MODEL=llama3.2:3b
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - lenny-network
+
+  # Next.js Full-Stack Frontend Studio
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: lenny-frontend
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - lenny-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  lenny-network:
+    driver: bridge

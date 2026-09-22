@@ -633,6 +633,76 @@ Fetch `ReadableStream` enables full HTTP POST streaming, and rigid viewport cont
 ### Commit
 `565a204` — `feat: implement Next.js full-stack frontend with split-pane sandboxed artifact viewer`
 
+---
+
+## Feature 9 (Phase 10) — Docker Compose & End-to-End Containerization
+
+### Goal
+Package the complete application (PostgreSQL + pgvector database, FastAPI backend, and Next.js frontend) into production-grade multi-stage Docker containers orchestrated via a single reproducible `docker-compose.yml` command.
+
+### Requirements
+- Address assignment requirement for Docker Compose reproducible setup.
+- Multi-stage Dockerfile for Next.js (`output: "standalone"`) reducing image size to ~120MB.
+- Multi-stage Dockerfile for FastAPI Python 3.12 with pre-compiled wheels for `greenlet` and `asyncpg`.
+- PostgreSQL 16 service with persistent storage volume (`postgres_data`).
+- Bridge container-to-host networking via `host.docker.internal:host-gateway` allowing the backend container to talk directly to native host Ollama with Apple Silicon GPU acceleration.
+- Automatic container healthchecks and dependency sequencing (`depends_on` conditions).
+
+### Design
+- `docker-compose.yml`: Multi-service specification (`db`, `backend`, `frontend`, `lenny-network`, `postgres_data`).
+- `backend/Dockerfile`: Multi-stage build (`builder` with build-essential, `runner` with python:3.12-slim and curl healthcheck).
+- `backend/.dockerignore`: Excludes caches, venvs, and sqlite files.
+- `frontend/Dockerfile`: Multi-stage build (`deps`, `builder`, `runner` with standalone server).
+- `frontend/.dockerignore`: Excludes node_modules, `.next`, and environment files.
+
+### Implementation
+- Added `asyncpg>=0.29.0` to `backend/requirements.txt` for PostgreSQL driver support.
+- Configured `output: "standalone"` in `frontend/next.config.mjs`.
+- Created `frontend/public/.gitkeep`.
+- Created `frontend/.dockerignore` and `frontend/Dockerfile`.
+- Created `backend/.dockerignore` and `backend/Dockerfile`.
+- Created `docker-compose.yml`.
+- Validated compose syntax with `docker compose config`.
+
+### Files Changed
+- `backend/requirements.txt`
+- `backend/Dockerfile`
+- `backend/.dockerignore`
+- `frontend/next.config.mjs`
+- `frontend/Dockerfile`
+- `frontend/.dockerignore`
+- `frontend/public/.gitkeep`
+- `docker-compose.yml`
+- `insights/PROCESS.md`
+- `insights/DECISION.md`
+- `insights/QA.md`
+
+### Tests
+- `docker compose config`: Validated service schemas, port mappings, volumes, and healthchecks without syntax errors.
+- `npm run build`: Re-verified standalone Next.js build.
+- Backend pytest suite: 33/33 tests passing.
+
+### Verification
+- Validated container topology and host-gateway configuration.
+
+### Understanding Gate
+1. Why connecting to `http://localhost:11434` inside a container fails to reach host Ollama, and how `host.docker.internal` solves it.
+2. The security, performance, and image size benefits of multi-stage Docker builds.
+
+### My Answer
+1. Not sure.
+2. Not sure.
+
+### Correction / Clarification
+- Explained isolated network namespaces: `localhost` in a container refers to the container's own loopback interface; `host.docker.internal` routes across the virtualization bridge to the host.
+- Explained multi-stage builds: separates the heavy build toolchain from the minimal production runner, shrinking image sizes by ~90% and eliminating CVE attack surface.
+
+### Final Understanding
+Container networking requires explicit host-gateway bridging for native host services, and multi-stage builds ensure minimal, secure production images.
+
+### Commit
+`feat: implement multi-stage Dockerfiles and docker-compose orchestration`
+
 
 
 

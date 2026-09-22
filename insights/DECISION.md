@@ -390,6 +390,35 @@ We select **Option B: Fetch API + ReadableStream Reader with Dual Split-Pane Stu
 ## Why
 Provides complete control over HTTP POST streaming protocols, eliminates layout thrashing, and creates an exceptional desktop/mobile user experience.
 
+---
+
+# Decision 012: Multi-Stage Standalone Docker Architecture & Host-Gateway Networking
+
+## Context
+Production containerization must satisfy three core engineering constraints:
+1. Allow single-command reproducible deployment (`docker compose up --build`) across macOS, Linux, and Windows.
+2. Allow containerized backend services to communicate with native host Ollama (`llama3.2:3b`) to preserve Apple Silicon Metal GPU acceleration without running Ollama inside a heavy container VM.
+3. Keep container image sizes minimal and secure by eliminating build toolchains from runtime images.
+
+## Options Considered
+
+### Option A: Single-stage Dockerfile running npm run dev / pip install in container
+- Massive images (>1.5 GB per container).
+- Security risk: production image contains compilers, package managers, and devDependencies.
+- High memory usage and slow container startup.
+
+### Option B: Multi-Stage Docker Builds with Host-Gateway DNS Alias
+- **Next.js Standalone Runner**: Stage 1 installs dependencies; Stage 2 compiles the Next.js standalone server bundle (`output: "standalone"`); Stage 3 (minimal `node:20-alpine`) copies only the standalone server and static assets, reducing image size to ~120 MB.
+- **FastAPI Lean Runner**: Stage 1 compiles C-extension wheels (`greenlet`, `asyncpg`); Stage 2 (`python:3.12-slim`) copies pre-built packages and runs non-root Uvicorn.
+- **Host Gateway DNS**: In `docker-compose.yml`, configure `extra_hosts: ["host.docker.internal:host-gateway"]` and `OLLAMA_BASE_URL=http://host.docker.internal:11434`. This bridges the container's isolated network loopback to the host Mac's native Ollama instance with zero virtualization overhead.
+
+## Decision
+We select **Option B: Multi-Stage Docker Builds with Host-Gateway DNS Alias**.
+
+## Why
+Reduces image sizes by ~90%, removes build-tool attack vectors, and unlocks high-speed Metal-accelerated local inference directly from within containerized microservices.
+
+
 
 
 

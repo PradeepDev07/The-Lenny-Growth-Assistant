@@ -256,6 +256,46 @@ Why does modern web development use standard `fetch()` with `ReadableStream` (`r
   2. **Rigid Viewport Container**: Because dynamic measurement is physically forbidden by the browser security model, the host container must treat the iframe as a fixed, self-contained viewport (`h-full w-full border-0`). Any vertical content overflow is safely and naturally handled by the browser's internal scrolling inside the sandboxed frame without altering the host layout.
 - *Verified Mental Model:* `fetch` + `getReader` gives unrestricted HTTP control over SSE streams; `h-full w-full` rigid iframe containers embrace the security isolation boundary rather than fighting it.
 
+---
+
+## Gate 9 — Containerization & Multi-Service Docker Orchestration
+
+### Question 1
+When running the FastAPI backend inside a Docker container on macOS, why does attempting to connect to `http://localhost:11434` to reach Ollama running on the host Mac fail, and how does configuring `http://host.docker.internal:11434` or Docker host networking bridge this container-to-host boundary?
+
+**User Answer:**
+> 1. Not sure.
+> 2. Not sure.
+
+**Mentor Assessment & Architectural Explanation (Question 1 — Host vs Container Networking):**
+- *The Isolated Loopback Problem:* Every Docker container operates inside its own isolated Linux network namespace with its own private loopback interface (`lo`). When code inside the backend container attempts to call `http://localhost:11434`, `localhost` (`127.0.0.1`) refers **exclusively to the container itself**. Because Ollama is running natively on macOS on the host and not inside that container, the request fails with `httpx.ConnectError: [Errno 111] Connection refused`.
+- *The Bridge via `host.docker.internal`:* Docker Desktop (on macOS and Windows) provisions a special DNS alias: `host.docker.internal`. Docker's internal DNS server automatically resolves this domain name to the host machine's virtual gateway IP on the container network bridge. By configuring `OLLAMA_BASE_URL=http://host.docker.internal:11434` inside Docker, the containerized FastAPI app seamlessly communicates with the host's Ollama instance, taking full advantage of Apple Silicon Metal GPU acceleration without requiring Ollama to run inside Docker.
+- *Verified Mental Model:* `localhost` inside a container is strictly local to that container; `host.docker.internal` routes across the virtualization boundary back to the physical host.
+
+---
+
+### Question 2
+In production Docker images (both for Next.js and FastAPI), why do we use multi-stage builds (`FROM node:... AS builder` and `FROM node:... AS runner`) rather than copying the full source tree and shipping the entire development toolchain (compilers, devDependencies, cache files)? What are the practical impacts on image size, attack surface, and deployment startup time?
+
+**User Answer:**
+> Not sure.
+
+**Mentor Assessment & Architectural Explanation (Question 2 — Multi-Stage Builds & Optimization):**
+- *The Problem with Single-Stage Builds:*
+  1. **Massive Image Bloat:** If a single stage runs `npm install`, TypeScript compilation, and bundling, the resulting image retains the entire npm package cache, devDependencies (`typescript`, `@types/*`, `eslint`, `tailwindcss`), and build logs. A Next.js image easily explodes from **~120 MB to over 1.5 GB**!
+  2. **Security Vulnerabilities (Attack Surface):** Shipping build tools (`npm`, `yarn`, C compilers, python headers, git) into production gives attackers immediate reconnaissance and exploit tools if an application vulnerability occurs.
+  3. **Deployment Latency:** Pulling a 1.5 GB image across networks in CI/CD takes minutes, degrading auto-scaling responsiveness and increasing storage costs.
+- *How Multi-Stage Builds Solve This:*
+  - **Stage 1 (Builder):** Uses a heavy base image containing build dependencies (compilers, npm devDependencies, C-extension tools for Python) to compile the Next.js `.next/standalone` production bundle or Python wheels.
+  - **Stage 2 (Runner):** Uses a featherlight production image (e.g. `node:20-alpine` or `python:3.12-slim`). It **only copies the compiled output and runtime assets** (`.next/standalone`, `public`, production wheels).
+  - **Engineering Outcomes:**
+    - Shrinks image size by **85% to 90%** (~120 MB vs ~1.5 GB).
+    - Minimizes Common Vulnerabilities and Exposures (CVEs) by eliminating compilers and unnecessary binaries.
+    - Speeds up image pulls and cold starts to seconds.
+- *Verified Mental Model:* Multi-stage builds: compile inside a heavy, disposable workshop (Builder); run inside an ultra-lean, locked-down vault (Runner).
+
+
+
 
 
 

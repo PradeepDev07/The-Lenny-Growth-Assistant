@@ -63,3 +63,18 @@ async def test_cors_headers():
         )
         assert response.status_code == 200
         assert response.headers.get("access-control-allow-origin") == "http://localhost:3000"
+
+
+@pytest.mark.anyio
+async def test_production_cors_header():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+        response = await client.options(
+            "/health",
+            headers={
+                "Origin": "https://lennygrowth.pradeepleadsystems.in",
+                "Access-Control-Request-Method": "GET"
+            }
+        )
+        assert response.status_code == 200
+        assert response.headers.get("access-control-allow-origin") == "https://lennygrowth.pradeepleadsystems.in"
+

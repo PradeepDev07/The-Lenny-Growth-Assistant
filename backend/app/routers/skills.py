@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse, HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from backend.app.config import settings
 from backend.app.db.session import get_db_session
 from backend.app.db.repository import SessionRepository
 from backend.app.schemas.session import ErrorResponse, ArtifactResponse
@@ -168,14 +169,15 @@ pre {{ background: #0f172a; color: #f8fafc; padding: 16px; border-radius: 8px; o
     # 3. style-src 'unsafe-inline' allows embedded CSS
     # 4. img-src data: allows inline base64 images
     # 5. connect-src 'none' blocks ALL outbound network requests (fetch, XHR, WebSockets)
-    # 6. frame-ancestors allows embedding only in host frontend
+    # 6. frame-ancestors allows embedding only in host frontend and authorized origins
+    ancestors = " ".join(["'self'"] + settings.cors_origin_list)
     csp = (
         "default-src 'none'; "
         "script-src 'unsafe-inline'; "
         "style-src 'unsafe-inline'; "
         "img-src data:; "
         "connect-src 'none'; "
-        "frame-ancestors 'self' http://localhost:3000 http://127.0.0.1:3000;"
+        f"frame-ancestors {ancestors};"
     )
 
     return HTMLResponse(

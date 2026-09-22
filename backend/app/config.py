@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     APP_VERSION: str = "0.1.0"
 
     # CORS
-    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000,https://lennygrowth.pradeepleadsystems.in"
 
     @property
     def cors_origin_list(self) -> List[str]:

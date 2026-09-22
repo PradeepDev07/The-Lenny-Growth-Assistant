@@ -57,10 +57,10 @@ The frontend can be deployed via:
 3. Import the repository.
 4. Configure project settings:
    - **Framework Preset:** `Next.js`
-   - **Root Directory:** `./frontend` (or leave as `.` if using root `vercel.json`)
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `.next`
-   - **Install Command:** `npm ci`
+   - **Root Directory:** `frontend`
+   - **Build Command:** `npm run build` (or default)
+   - **Output Directory:** Default / Override OFF (automatically `.next`; **do NOT override to `frontend/.next`**)
+   - **Install Command:** `npm ci --include=dev` (configured in `frontend/vercel.json`)
 5. In **Environment Variables**, add:
    ```text
    NEXT_PUBLIC_API_URL = https://lennygrowthapi.pradeepleadsystems.in
@@ -80,14 +80,14 @@ vercel env add NEXT_PUBLIC_API_URL production
 vercel --prod
 ```
 
-### Vercel Rewrites & Security Headers (`vercel.json`)
-`vercel.json` provides API proxying and security headers:
+### Vercel Rewrites & Security Headers (`frontend/vercel.json`)
+`frontend/vercel.json` provides API proxying and security headers:
 ```json
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "buildCommand": "npm run build",
-  "installCommand": "npm ci",
+  "installCommand": "npm ci --include=dev",
   "headers": [
     {
       "source": "/(.*)",

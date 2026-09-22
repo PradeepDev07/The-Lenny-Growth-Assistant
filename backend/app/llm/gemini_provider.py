@@ -15,7 +15,7 @@ class GeminiProvider(BaseLLMProvider):
     Excels at large-context retrieval Q&A and low-latency grounded reasoning.
     """
 
-    def __init__(self, api_key: str, model_name: str = "gemini-flash-latest"):
+    def __init__(self, api_key: str, model_name: str = "gemini-2.5-flash"):
         super().__init__(model_name=model_name)
         self.api_key = api_key.strip() if api_key else ""
         self.base_url = "https://generativelanguage.googleapis.com/v1beta/models"
@@ -39,19 +39,15 @@ class GeminiProvider(BaseLLMProvider):
                 "parts": [{"text": msg.content}]
             })
 
-        gen_config = {
-            "temperature": temperature,
-            "maxOutputTokens": max_tokens,
-        }
-        # Only set thinkingBudget for models that support thinkingConfig (omit for lite models)
-        if "lite" not in self.model_name.lower():
-            gen_config["thinkingConfig"] = {
-                "thinkingBudget": 0
-            }
-
         payload = {
             "contents": contents,
-            "generationConfig": gen_config
+            "generationConfig": {
+                "temperature": temperature,
+                "maxOutputTokens": max_tokens,
+                "thinkingConfig": {
+                    "thinkingBudget": 0
+                }
+            }
         }
 
         if system_prompt:

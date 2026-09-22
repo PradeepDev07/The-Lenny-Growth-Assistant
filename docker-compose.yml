@@ -69,11 +69,11 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://lennygrowthapi.pradeepleadsystems.in}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://thelennygrowthassistant-backend-latest.onrender.com}
     container_name: lenny-frontend
     restart: unless-stopped
     environment:
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://lennygrowthapi.pradeepleadsystems.in}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://thelennygrowthassistant-backend-latest.onrender.com}
     ports:
       - "3000:3000"
     depends_on:

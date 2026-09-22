@@ -38,14 +38,14 @@ The frontend can be deployed via:
 
 | Variable | Scope | Default Value | Description |
 | :--- | :--- | :--- | :--- |
-| `NEXT_PUBLIC_API_URL` | **Build & Runtime** | `https://lennygrowthapi.pradeepleadsystems.in` | Base URL of the FastAPI backend. **Must be provided at build time** for client-side JavaScript inlining. |
+| `NEXT_PUBLIC_API_URL` | **Build & Runtime** | `https://thelennygrowthassistant-backend-latest.onrender.com` | Base URL of the FastAPI backend. **Must be provided at build time** for client-side JavaScript inlining. |
 | `PORT` | **Runtime** | `3000` | Port on which the standalone server listens. Automatically overridden by container orchestrators. |
 | `HOSTNAME` | **Runtime** | `0.0.0.0` | Network interface to bind. Must be `0.0.0.0` so ingress traffic reaches the container. |
 | `NODE_ENV` | **Build & Runtime** | `production` | Optimizes React and Next.js for production execution. |
 | `NEXT_TELEMETRY_DISABLED` | **Build & Runtime** | `1` | Disables telemetry reporting during builds and execution. |
 
 > [!IMPORTANT]
-> **Build-Time Inlining:** Next.js bakes `NEXT_PUBLIC_*` variables into client-side JS bundles during `npm run build`. If building via Docker, pass `--build-arg NEXT_PUBLIC_API_URL="https://lennygrowthapi.pradeepleadsystems.in"`.
+> **Build-Time Inlining:** Next.js bakes `NEXT_PUBLIC_*` variables into client-side JS bundles during `npm run build`. If building via Docker, pass `--build-arg NEXT_PUBLIC_API_URL="https://thelennygrowthassistant-backend-latest.onrender.com"`.
 
 ---
 
@@ -63,7 +63,7 @@ The frontend can be deployed via:
    - **Install Command:** `npm ci --include=dev` (configured in `frontend/vercel.json`)
 5. In **Environment Variables**, add:
    ```text
-   NEXT_PUBLIC_API_URL = https://lennygrowthapi.pradeepleadsystems.in
+   NEXT_PUBLIC_API_URL = https://thelennygrowthassistant-backend-latest.onrender.com
    ```
 6. Click **Deploy**.
 
@@ -100,9 +100,9 @@ vercel --prod
     }
   ],
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://lennygrowthapi.pradeepleadsystems.in/api/:path*" },
-    { "source": "/health", "destination": "https://lennygrowthapi.pradeepleadsystems.in/health" },
-    { "source": "/config", "destination": "https://lennygrowthapi.pradeepleadsystems.in/config" }
+    { "source": "/api/:path*", "destination": "https://thelennygrowthassistant-backend-latest.onrender.com/api/:path*" },
+    { "source": "/health", "destination": "https://thelennygrowthassistant-backend-latest.onrender.com/health" },
+    { "source": "/config", "destination": "https://thelennygrowthassistant-backend-latest.onrender.com/config" }
   ]
 }
 ```
@@ -117,7 +117,7 @@ For container platforms, private clouds, or self-hosted container runtimes:
 ```bash
 docker build \
   -f Dockerfile.vercel \
-  --build-arg NEXT_PUBLIC_API_URL="https://lennygrowthapi.pradeepleadsystems.in" \
+  --build-arg NEXT_PUBLIC_API_URL="https://thelennygrowthassistant-backend-latest.onrender.com" \
   -t frontend-vercel .
 ```
 
@@ -126,7 +126,7 @@ docker build \
 cd frontend
 docker build \
   -f Dockerfile.vercel \
-  --build-arg NEXT_PUBLIC_API_URL="https://lennygrowthapi.pradeepleadsystems.in" \
+  --build-arg NEXT_PUBLIC_API_URL="https://thelennygrowthassistant-backend-latest.onrender.com" \
   -t frontend-vercel .
 ```
 

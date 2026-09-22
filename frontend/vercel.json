@@ -29,15 +29,15 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://lennygrowthapi.pradeepleadsystems.in/api/:path*"
+      "destination": "https://thelennygrowthassistant-backend-latest.onrender.com/api/:path*"
     },
     {
       "source": "/health",
-      "destination": "https://lennygrowthapi.pradeepleadsystems.in/health"
+      "destination": "https://thelennygrowthassistant-backend-latest.onrender.com/health"
     },
     {
       "source": "/config",
-      "destination": "https://lennygrowthapi.pradeepleadsystems.in/config"
+      "destination": "https://thelennygrowthassistant-backend-latest.onrender.com/config"
     }
   ]
 }

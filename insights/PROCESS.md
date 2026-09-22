@@ -701,7 +701,7 @@ Package the complete application (PostgreSQL + pgvector database, FastAPI backen
 Container networking requires explicit host-gateway bridging for native host services, and multi-stage builds ensure minimal, secure production images.
 
 ### Commit
-`feat: implement multi-stage Dockerfiles and docker-compose orchestration`
+`ff70cc7` — `feat: implement multi-stage Dockerfiles and docker-compose orchestration`
 
 
 

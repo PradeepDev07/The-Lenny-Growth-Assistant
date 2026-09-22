@@ -35,16 +35,16 @@ class Settings(BaseSettings):
 
     # Cloud Providers (Secrets - never expose directly in public endpoints)
     GEMINI_API_KEY: str = Field(default="")
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL: str = "gemini-3.8-flash"
 
     OPENROUTER_API_KEY: str = Field(default="")
     OPENROUTER_MODEL: str = "nvidia/nemotron-3-ultra-550b-a55b:free"
 
     # Task Router Mappings
-    MODEL_FOR_INTENT: str = "gemini-2.5-flash-lite"
-    MODEL_FOR_RETRIEVAL_QA: str = "gemini-2.5-flash"
+    MODEL_FOR_INTENT: str = "gemini-flash-lite-latest"
+    MODEL_FOR_RETRIEVAL_QA: str = "gemini-3.8-flash"
     MODEL_FOR_ESSAY: str = "nvidia/nemotron-3-ultra-550b-a55b:free"
-    MODEL_FOR_ARTIFACT: str = "gemini-2.5-flash"
+    MODEL_FOR_ARTIFACT: str = "gemini-3.8-flash"
 
     @property
     def has_gemini(self) -> bool:

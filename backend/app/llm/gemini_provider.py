@@ -15,8 +15,9 @@ class GeminiProvider(BaseLLMProvider):
     Excels at large-context retrieval Q&A and low-latency grounded reasoning.
     """
 
-    def __init__(self, api_key: str, model_name: str = "gemini-2.5-flash"):
-        super().__init__(model_name=model_name)
+    def __init__(self, api_key: str, model_name: str = "gemini-3.8-flash"):
+        clean_model = model_name.removeprefix("models/") if model_name else "gemini-3.8-flash"
+        super().__init__(model_name=clean_model)
         self.api_key = api_key.strip() if api_key else ""
         self.base_url = "https://generativelanguage.googleapis.com/v1beta/models"
 

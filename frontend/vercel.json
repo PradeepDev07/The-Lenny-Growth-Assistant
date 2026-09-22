@@ -2,7 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
   "buildCommand": "npm run build",
-  "installCommand": "npm ci",
+  "installCommand": "npm ci --include=dev",
   "headers": [
     {
       "source": "/(.*)",
@@ -29,15 +29,15 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://lennygrowth.pradeepleadsystems.in/api/:path*"
+      "destination": "https://lennygrowthapi.pradeepleadsystems.in/api/:path*"
     },
     {
       "source": "/health",
-      "destination": "https://lennygrowth.pradeepleadsystems.in/health"
+      "destination": "https://lennygrowthapi.pradeepleadsystems.in/health"
     },
     {
       "source": "/config",
-      "destination": "https://lennygrowth.pradeepleadsystems.in/config"
+      "destination": "https://lennygrowthapi.pradeepleadsystems.in/config"
     }
   ]
 }

@@ -10,8 +10,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -36,6 +36,8 @@ dist/
 .env
 .env.local
 .env.*.local
+.env.production
+.env*.production
 *.pem
 *.key
 

@@ -3,7 +3,7 @@
   "framework": "nextjs",
   "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/.next",
-  "installCommand": "cd frontend && npm ci",
+  "installCommand": "cd frontend && npm ci --include=dev",
   "headers": [
     {
       "source": "/(.*)",
@@ -30,15 +30,15 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://lennygrowth.pradeepleadsystems.in/api/:path*"
+      "destination": "https://lennygrowthapi.pradeepleadsystems.in/api/:path*"
     },
     {
       "source": "/health",
-      "destination": "https://lennygrowth.pradeepleadsystems.in/health"
+      "destination": "https://lennygrowthapi.pradeepleadsystems.in/health"
     },
     {
       "source": "/config",
-      "destination": "https://lennygrowth.pradeepleadsystems.in/config"
+      "destination": "https://lennygrowthapi.pradeepleadsystems.in/config"
     }
   ]
 }

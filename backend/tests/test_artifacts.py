@@ -10,6 +10,13 @@ from backend.app.skills.interactive import (
     build_interactive_artifact_prompt,
     INTERACTIVE_ARTIFACT_SYSTEM_PROMPT
 )
+from backend.app.db.session import init_db
+
+
+@pytest.fixture(autouse=True)
+async def setup_database():
+    """Ensure database tables exist before each test."""
+    await init_db()
 
 
 class MockArtifactProvider(BaseLLMProvider):

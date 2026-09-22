@@ -22,6 +22,8 @@ services:
 
   # FastAPI Backend Application Service
   backend:
+    platform: linux/amd64
+    image: pradeepdev17/thelennygrowthassistant-backend:latest
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -33,11 +35,16 @@ services:
       - ENVIRONMENT=production
       - LOG_LEVEL=INFO
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/lenny_assistant
-      - OLLAMA_BASE_URL=http://host.docker.internal:11434
-      - OLLAMA_MODEL=llama3.2:3b
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2:3b}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-3.8-flash}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - OPENROUTER_MODEL=${OPENROUTER_MODEL:-nvidia/nemotron-3-ultra-550b-a55b:free}
+      - MODEL_FOR_INTENT=${MODEL_FOR_INTENT:-gemini-flash-lite-latest}
+      - MODEL_FOR_RETRIEVAL_QA=${MODEL_FOR_RETRIEVAL_QA:-gemini-3.8-flash}
+      - MODEL_FOR_ESSAY=${MODEL_FOR_ESSAY:-nvidia/nemotron-3-ultra-550b-a55b:free}
+      - MODEL_FOR_ARTIFACT=${MODEL_FOR_ARTIFACT:-gemini-3.8-flash}
       - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://lennygrowth.pradeepleadsystems.in
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -56,13 +63,17 @@ services:
 
   # Next.js Full-Stack Frontend Studio
   frontend:
+    platform: linux/amd64
+    image: pradeepdev17/thelennygrowthassistant-frontend:latest
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://lennygrowthapi.pradeepleadsystems.in}
     container_name: lenny-frontend
     restart: unless-stopped
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://lennygrowthapi.pradeepleadsystems.in}
     ports:
       - "3000:3000"
     depends_on:

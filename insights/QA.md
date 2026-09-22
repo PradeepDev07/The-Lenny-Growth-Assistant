@@ -294,8 +294,31 @@ In production Docker images (both for Next.js and FastAPI), why do we use multi-
     - Speeds up image pulls and cold starts to seconds.
 - *Verified Mental Model:* Multi-stage builds: compile inside a heavy, disposable workshop (Builder); run inside an ultra-lean, locked-down vault (Runner).
 
+---
 
+## Gate 10 — UI Design Transformation: Light Liquid Glass Workspace
 
+### Question 1
+Why was it critical to eliminate `@media (prefers-color-scheme: dark)` and remove all dark-slate styling when engineering a dedicated Light Liquid Glass UI, and how do layered backdrop-filter blurs, subtle translucent backgrounds (`rgba(255, 255, 255, 0.65)`), and top-edge pseudo-element highlight borders simulate physical glass depth without visual noise?
 
+**User & Mentor Architectural Synthesis:**
+- *Light Mode Isolation:* Allowing dark-mode system media queries or rogue dark classes to leak into liquid glass styles causes catastrophic contrast inversions—dark text renders against dark semi-transparent glass panes, destroying legibility. Purging `@media (prefers-color-scheme: dark)` ensures consistent photonic refraction regardless of OS-level dark mode settings.
+- *Optics of Liquid Glass:* Physical glass depth is created through three optical phenomena:
+  1. **Background Scattering:** Multi-tier CSS blurs (`backdrop-filter: blur(12px) -webkit-backdrop-filter: blur(12px)`) blur high-frequency visual noise from underlying layers while transmitting ambient luminance.
+  2. **Sub-Surface Transmission:** High-translucency fills (`rgba(255, 255, 255, 0.65)` to `0.85`) reflect ambient canvas light while maintaining content separation.
+  3. **Directional Specular Highlights:** A top-edge white highlight (`border-t border-white/80` or pseudo-element `linear-gradient`) simulates directional light hitting the physical bevel of a glass sheet, instantly creating spatial elevation without heavy drop shadows.
+- *Verified Mental Model:* True glass depth is an optical illusion composed of background blur, translucent fill, and directional specular edge refraction.
 
+---
 
+## Gate 11 — Reasoning Models, Thinking Budgets & Output Token Exhaustion
+
+### Question 1
+When working with reasoning models (like Gemini 2.5 Flash), why does setting `max_tokens = 2048` cause long-form code generation to cut off prematurely, and why is configuring `thinkingBudget: 0` essential when generating executable single-file HTML applications?
+
+**User Answer:**
+> if set thinkingbudget model spend more token only the remaining tokens used to generate response that's why it's cutoff middle for single html application. Removing the thinkingbudget to 0 does not affect response that much.
+
+**Mentor Assessment:**
+- *What was right:* Exactly on point. In reasoning models like Gemini 2.5 Flash, internal chain-of-thought tokens (`thoughtsTokenCount`) and visible candidate tokens share the exact same `maxOutputTokens` quota. When `thinkingBudget` is active, the model consumes the vast majority of its quota (e.g. 1,700+ tokens) internally on reasoning, leaving only a tiny remainder (e.g. ~200–300 tokens) for visible code. When the total hits the token ceiling, the API terminates mid-sentence or mid-CSS with `finishReason: MAX_TOKENS`.
+- *Verified Mental Model:* Reasoning tokens are deducted directly from the output token ceiling. For structured code emission where system prompts already supply rigid architectural templates and CSS/JS frameworks, removing internal thinking (`thinkingBudget: 0`) and raising `max_tokens` (to 8,192) reserves 100% of the token quota for complete, un-truncated application generation.

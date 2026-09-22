@@ -76,7 +76,5 @@ The Lenny Growth Assistant is a full-stack, AI-powered system that delivers answ
 - **Rigid Viewport Sandboxing:** Because cross-origin security prevents a parent container from reading `iframe.contentDocument.body.scrollHeight`, sandboxed frames must be rendered in fixed viewports (`h-full w-full`) with internal scrolling rather than attempting dynamic height calculation.
 - **Host-to-Container Network Bridging:** A Docker container's `localhost` loopback is isolated to the container. To reach native services running on the physical host (like Ollama with Metal GPU acceleration), the container must connect through `host.docker.internal` via Docker's host-gateway DNS alias.
 - **Multi-Stage Docker Builds:** Separating the build environment (heavy compilers, npm devDependencies) from the production runner (minimal Alpine/Debian slim base) shrinks image sizes by ~90% and eliminates CVE attack surface.
-
-
-
-
+- **Liquid Glass Spatial Architecture:** Physical glass interfaces require strict light-canvas isolation (purging dark media queries to prevent contrast corruption), layered backdrop-filter blurs, and directional specular border highlights (`border-t border-white/80`) to establish tactile optical depth without UI clutter.
+- **Reasoning Models & Shared Token Quotas:** In reasoning models (e.g. `gemini-2.5-flash`), internal chain-of-thought tokens deduct directly from the `maxOutputTokens` quota. When generating long executable HTML applications, internal thoughts rapidly exhaust the quota, causing premature cutoff mid-code. Disabling internal thinking (`thinkingBudget: 0`) and raising `max_tokens` (to 8,192) reserves 100% of the token allowance for complete, executable generation.

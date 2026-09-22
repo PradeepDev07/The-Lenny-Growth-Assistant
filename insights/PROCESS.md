@@ -559,6 +559,80 @@ Two-layer defense-in-depth: `origin: null` establishes vertical privilege isolat
 ### Commit
 `e5cc5fa` — `feat: implement sandboxed interactive artifact generation engine with defense-in-depth CSP`
 
+---
+
+## Feature 8 — Full-Stack Frontend with Split-Pane Sandboxed UI
+
+### Goal
+Build a responsive, modern Next.js / React frontend providing a dual-pane studio experience: real-time streaming RAG conversation on the left, and sandboxed interactive artifact preview on the right.
+
+### Requirements
+- Split-pane studio layout:
+  - Left pane: Chat thread, multi-mode selector (`RAG Q&A`, `Ship 30 Essay`, `Interactive Tool`), quick prompt chips, model provider dropdown (`Auto`, `Ollama`, `Gemini`, `OpenRouter`).
+  - Right pane: Active artifact preview (formatted Markdown with word count or sandboxed `<iframe>` with `origin: null` and CSP containment), export/copy actions, and session artifact history archive.
+  - Left collapsible drawer: Session history with message counts, new chat creation, and cascade deletion.
+- Top header: Live health indicators (Database, local Ollama 3B, Cloud LLM) and version badge.
+- Real-time streaming SSE via `fetch()` with `response.body.getReader()`.
+- Production build: Zero ESLint or TypeScript compile errors.
+
+### Design
+- `frontend/src/types/index.ts`: TypeScript contracts for sessions, messages, artifacts, health, and config.
+- `frontend/src/lib/api.ts`: Universal SSE stream consumer using `fetch` and `ReadableStreamDefaultReader`.
+- `frontend/src/components/Header.tsx`: System readiness probe display and model override picker.
+- `frontend/src/components/Sidebar.tsx`: Session list, cascade deletion, and new chat creation.
+- `frontend/src/components/ChatPane.tsx`: Streaming conversation, source attribution badges, and quick prompts.
+- `frontend/src/components/ArtifactPane.tsx`: Dual-mode viewer (sandboxed `<iframe>` for interactive calculators, `react-markdown` for essays).
+- `frontend/src/app/page.tsx`: Root orchestrator managing session state and artifact transitions.
+
+### Implementation
+- Initialized Next.js 14 app with TypeScript and Tailwind CSS.
+- Installed `lucide-react`, `react-markdown`, and `remark-gfm`.
+- Configured ESLint rules for development flexibility.
+- Implemented all components and API clients.
+- Verified production build via `npm run build` (compiled 5/5 static pages cleanly).
+
+### Files Changed
+- `frontend/package.json`
+- `frontend/tsconfig.json`
+- `frontend/tailwind.config.ts`
+- `frontend/.eslintrc.json`
+- `frontend/src/types/index.ts`
+- `frontend/src/lib/api.ts`
+- `frontend/src/components/Header.tsx`
+- `frontend/src/components/Sidebar.tsx`
+- `frontend/src/components/ChatPane.tsx`
+- `frontend/src/components/ArtifactPane.tsx`
+- `frontend/src/app/layout.tsx`
+- `frontend/src/app/page.tsx`
+- `insights/PROCESS.md`
+- `insights/DECISION.md`
+- `insights/QA.md`
+
+### Tests
+- `npm run build`: Compiled successfully without errors or type warnings.
+- Backend pytest suite: 33/33 tests passing.
+
+### Verification
+- Production build verified (`.next` optimized bundle, 143 kB first load JS).
+
+### Understanding Gate
+1. Limitations of native `EventSource` (GET-only, no JSON body, no custom headers) vs `fetch` + `ReadableStream`.
+2. Why the parent container cannot read `iframe.contentDocument.body.scrollHeight` and why `h-full w-full` rigid containers are standard for sandboxes.
+
+### My Answer
+1. Fetch API with `getReader()` gets instantaneous token feedback.
+2. Not sure.
+
+### Correction / Clarification
+- Detailed why `EventSource` fails for POST requests and JSON payloads, and how `fetch` + `getReader` solves it.
+- Explained cross-origin security barriers: `origin: null` triggers `DOMException` on parent inspection, necessitating fixed viewport containers with internal scrolling.
+
+### Final Understanding
+Fetch `ReadableStream` enables full HTTP POST streaming, and rigid viewport containers respect iframe origin isolation.
+
+### Commit
+`feat: implement Next.js full-stack frontend with split-pane sandboxed artifact viewer`
+
 
 
 

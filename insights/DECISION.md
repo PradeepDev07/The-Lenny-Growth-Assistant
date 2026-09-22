@@ -362,5 +362,34 @@ We select **Option C: Two-Layer Defense-in-Depth Sandbox**.
 ## Why
 Guarantees zero parent privilege escalation while completely neutralizing network exfiltration channels, while still allowing rich interactive JavaScript calculators to run client-side.
 
+---
+
+# Decision 011: Fetch ReadableStream SSE Client & Dynamic Split-Pane Architecture
+
+## Context
+The frontend needs to support three distinct interaction paradigms in a unified interface:
+1. Grounded RAG conversational Q&A (`/api/chat`).
+2. Long-form ~1,250-word Ship 30 for 30 essays (`/api/skills/essay`).
+3. Interactive HTML/JS tools and calculators (`/api/skills/artifact`).
+
+Native browser `EventSource` is limited to HTTP `GET`, cannot send JSON request bodies (e.g. `session_id`, `topic`, `provider_override`), and risks hitting URL query parameter length limits. Furthermore, rendering both chat and live artifacts in a single column forces users to scroll constantly between conversational bubbles and long artifacts.
+
+## Options Considered
+
+### Option A: Single-column chat with native EventSource via GET query parameters
+- Subject to URL length limits and server access log leakage.
+- Clutters conversational thread with massive ~1,250-word essays and interactive HTML apps.
+
+### Option B: Fetch API + ReadableStream Reader with Dual Split-Pane Studio Layout
+- **Fetch ReadableStream Client**: Use `fetch(url, { method: "POST", body: JSON.stringify(...) })` and decode incoming stream chunks using `response.body.getReader()`. Supports full POST payloads, custom headers, and instant token-by-token rendering.
+- **Split-Pane Studio**: Left pane dedicated to conversation, quick prompt chips, and mode switching (`RAG Q&A`, `Ship 30 Essay`, `Interactive Tool`). Right pane dedicated to active artifact rendering (formatted Markdown with word count or sandboxed `<iframe>` with `origin: null` and CSP containment) plus an archive tab of past artifacts.
+
+## Decision
+We select **Option B: Fetch API + ReadableStream Reader with Dual Split-Pane Studio Layout**.
+
+## Why
+Provides complete control over HTTP POST streaming protocols, eliminates layout thrashing, and creates an exceptional desktop/mobile user experience.
+
+
 
 

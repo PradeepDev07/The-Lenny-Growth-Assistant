@@ -233,4 +233,29 @@ Even if access to `window.parent` is blocked by origin isolation, what prevents 
   - `script-src 'unsafe-inline'` & `style-src 'unsafe-inline'`: Permits the calculator's embedded math functions, event listeners, and CSS styles to execute smoothly without needing remote network dependencies.
 - *Verified Mental Model:* Two-way containment: `sandbox="allow-scripts"` blocks vertical privilege escalation into the parent app, while `CSP: connect-src 'none'` blocks horizontal data leakage to the public internet.
 
+---
+
+## Gate 8 — Full-Stack Frontend & Split-Pane Sandboxed UI
+
+### Question 1
+Why does modern web development use standard `fetch()` with `ReadableStream` (`response.body.getReader()`) to consume Server-Sent Events from `POST` endpoints instead of the browser's native `new EventSource(url)` API? What fundamental limitation does `EventSource` have regarding HTTP request methods, request bodies, and custom authentication headers?
+
+**User Answer:**
+> 1. We use fetch API with `getReader()` to get instantaneous token feedback.
+> 2.1 Not sure.
+
+**Mentor Assessment:**
+- *What was right:* Accurately identified that `fetch()` combined with `ReadableStreamDefaultReader` (`response.body.getReader()`) empowers the frontend to process incoming stream chunks instantaneously as tokens arrive over the network.
+- *What was incomplete:* Clarified the critical architectural limitations of native `EventSource`:
+  1. **HTTP Method Restriction**: Native `EventSource` is strictly restricted to HTTP `GET`. It cannot initiate an HTTP `POST` request.
+  2. **No Request Body**: Because it is `GET`-only, `EventSource` cannot send JSON payloads (`{ session_id, message, provider_override }`). Trying to encode complex user prompts into URL query strings (`?message=...`) risks hitting URI length limits (typically 2KB–8KB in browsers and proxies) and leaks prompt data into server access logs.
+  3. **No Custom Headers**: `EventSource` does not support custom request headers (such as `Authorization: Bearer ...` or custom CSRF tokens).
+  4. Using `fetch()` with `response.body.getReader()` and `TextDecoderStream` grants total control over HTTP methods (`POST`), headers, and request bodies while preserving token-by-token streaming performance.
+- *Clarification on Question 2 (Sandboxed Iframe & Viewport Layout):*
+  1. **Cross-Origin Security Block**: Because our iframe omits `allow-same-origin`, its origin is `null`. The browser engine strictly prohibits the parent JavaScript from reading `iframe.contentDocument` or `iframe.contentWindow.document.body.scrollHeight`, throwing `DOMException: Blocked a frame with origin "http://localhost:3000" from accessing a cross-origin frame with origin "null"`. The parent simply cannot know how tall the internal document is.
+  2. **Rigid Viewport Container**: Because dynamic measurement is physically forbidden by the browser security model, the host container must treat the iframe as a fixed, self-contained viewport (`h-full w-full border-0`). Any vertical content overflow is safely and naturally handled by the browser's internal scrolling inside the sandboxed frame without altering the host layout.
+- *Verified Mental Model:* `fetch` + `getReader` gives unrestricted HTTP control over SSE streams; `h-full w-full` rigid iframe containers embrace the security isolation boundary rather than fighting it.
+
+
+
 

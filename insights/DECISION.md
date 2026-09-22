@@ -446,6 +446,37 @@ Enables full long-form essay and artifact generation capabilities via OpenRouter
 ## Trade-offs
 Free-tier endpoints on OpenRouter can encounter temporary rate limits (HTTP 429) during peak traffic hours. Our `TaskRouter` mitigates this by automatically catching rate limits and cascading down to local Ollama.
 
+---
+
+# Decision 014: Light Liquid Glass Design System Transformation
+
+## Context
+The initial frontend utilized a conventional dark-slate developer dashboard aesthetic (`bg-slate-950`). To elevate the product into an Apple/macOS-inspired AI workspace with a calm, tactile spatial environment, a complete visual transformation was required—with zero dark mode, no emojis as UI icons, and a warm orange accent.
+
+## Options Considered
+
+### Option A: Generic Dual-Theme (Dark/Light Switcher)
+- Requires maintaining dual CSS variable sets and testing every component under both lighting conditions.
+- Often leads to washed-out light mode designs that simply invert background colors without true physical depth.
+- Violates the explicit design mandate: "Light mode ONLY. There must be NO dark mode."
+
+### Option B: Dedicated Light Liquid Glass System
+- Centralized CSS variable tokens in `:root` with a subtle warm/light canvas background (`radial-gradient` on `#f5f5f3`).
+- 4-tiered glass hierarchy (`.glass-subtle`, `.glass`, `.glass-elevated`, `.glass-floating`) utilizing `-webkit-backdrop-filter: blur(...) saturate(...)` with pseudo-element top edge refraction highlights.
+- Spatial floating panels with rounded corners (`rounded-2xl` / `rounded-3xl`) and outer workspace margins.
+- Warm orange accent (`#f26a21`) strictly reserved for active states, mode pills, primary actions, and focus rings.
+- Lightweight SVG pixel cursor (`default`, `pointer`, `text`) for a tactile, retro-modern desktop feel.
+- 100% emoji-free UI: replaced all interface emojis with Lucide React icons.
+
+## Decision
+We select **Option B: Dedicated Light Liquid Glass System**.
+
+## Why
+Delivers a cohesive, high-end spatial workspace that feels like a native macOS application built specifically for AI agents, providing physical depth and calm readability without compromising performance.
+
+## Trade-offs
+Backdrop blur can be computationally expensive if applied to hundreds of micro-elements. We mitigate this by applying glass filters exclusively to major spatial surfaces (floating navigation, sidebar, split panes, and input dock) while keeping internal lists and text elements lightweight.
+
 
 
 

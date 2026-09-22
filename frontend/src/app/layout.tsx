@@ -14,10 +14,9 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "The Lenny Growth Assistant | Grounded AI & Execution Studio",
-  description: "Interactive AI growth assistant grounded in Lenny's Podcast transcripts with Ship 30 essays and sandboxed calculators.",
+  title: "The Lenny Growth Assistant | Light Liquid Glass Studio",
+  description: "Tactile AI growth workspace grounded in Lenny's Podcast transcripts with Ship 30 essays and sandboxed calculators.",
 };
-
 
 export default function RootLayout({
   children,
@@ -27,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} min-h-screen text-text-primary selection:bg-accent/20 selection:text-accent antialiased`}
       >
         {children}
       </body>

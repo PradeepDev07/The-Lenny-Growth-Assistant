@@ -233,7 +233,7 @@ export default function Home() {
             id: `err-${Date.now()}`,
             session_id: targetSessionId!,
             role: "assistant",
-            content: `⚠️ Error: ${err.message || "Failed to complete generation."}`,
+            content: `Generation failed: ${err.message || "Unable to complete request."}`,
             created_at: new Date().toISOString(),
           };
           setMessages((prev) => [...prev, errorMsg]);
@@ -244,8 +244,8 @@ export default function Home() {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-950 font-sans text-slate-100">
-      {/* Left Sidebar */}
+    <div className="flex h-screen w-screen overflow-hidden p-2 sm:p-3 md:p-3.5 font-sans text-text-primary">
+      {/* Floating Left Sidebar */}
       <Sidebar
         sessions={sessions}
         currentSessionId={currentSessionId}
@@ -256,9 +256,9 @@ export default function Home() {
         onCloseMobile={() => setSidebarOpen(false)}
       />
 
-      {/* Main Workspace Area */}
+      {/* Main Workspace Canvas */}
       <div className="flex-1 flex flex-col min-w-0 h-full">
-        {/* Top Header */}
+        {/* Floating Top Header */}
         <Header
           health={health}
           config={config}
@@ -267,9 +267,9 @@ export default function Home() {
           onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
         />
 
-        {/* Dual Split-Pane Studio */}
-        <main className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
-          {/* Left Pane: Conversation & Inputs */}
+        {/* Spatial Dual Split-Pane Studio */}
+        <main className="flex-1 flex flex-col lg:flex-row min-h-0 gap-3 overflow-hidden">
+          {/* Left Pane: Conversation & Chat Input */}
           <div className="w-full lg:w-[48%] h-1/2 lg:h-full flex flex-col min-w-0">
             <ChatPane
               messages={messages}
@@ -286,7 +286,7 @@ export default function Home() {
           </div>
 
           {/* Right Pane: Sandboxed Artifact & Preview Viewer */}
-          <div className="w-full lg:w-[52%] h-1/2 lg:h-full flex flex-col min-w-0 border-t lg:border-t-0 border-slate-800">
+          <div className="w-full lg:w-[52%] h-1/2 lg:h-full flex flex-col min-w-0">
             <ArtifactPane
               activeArtifact={activeArtifact}
               artifactsList={artifactsList}

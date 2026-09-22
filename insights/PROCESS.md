@@ -703,6 +703,32 @@ Container networking requires explicit host-gateway bridging for native host ser
 ### Commit
 `ff70cc7` — `feat: implement multi-stage Dockerfiles and docker-compose orchestration`
 
+---
+
+## Configuration Update — OpenRouter Model Configuration (`nvidia/nemotron-3-ultra-550b-a55b:free`)
+
+### Goal
+Configure OpenRouter to default to the free-tier `nvidia/nemotron-3-ultra-550b-a55b:free` model across backend settings, environment templates, and Docker Compose orchestration.
+
+### Requirements
+- Set `OPENROUTER_MODEL` and `MODEL_FOR_ESSAY` to `nvidia/nemotron-3-ultra-550b-a55b:free`.
+- Maintain complete compatibility with `BaseLLMProvider` and OpenRouter streaming endpoint.
+- Verify that all automated tests pass and the frontend builds cleanly.
+
+### Files Changed
+- `backend/app/config.py`: Updated default `OPENROUTER_MODEL` and `MODEL_FOR_ESSAY`.
+- `backend/app/llm/openrouter_provider.py`: Updated default `model_name` in constructor.
+- `.env`: Updated `OPENROUTER_MODEL` and `MODEL_FOR_ESSAY`.
+- `.env.example`: Updated `OPENROUTER_MODEL` and `MODEL_FOR_ESSAY`.
+- `docker-compose.yml`: Passed `OPENROUTER_MODEL` variable into backend service container.
+- `insights/DECISION.md`: Added Decision 013 documenting rationales and trade-offs.
+- `insights/PROCESS.md`: Documented configuration update.
+
+### Tests
+- `pytest -v backend/tests/`: 33/33 tests passed in 1.81s.
+- `npm run build` (frontend): Compiled successfully with 0 errors and generated standalone bundle.
+
+
 
 
 

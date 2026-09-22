@@ -418,6 +418,34 @@ We select **Option B: Multi-Stage Docker Builds with Host-Gateway DNS Alias**.
 ## Why
 Reduces image sizes by ~90%, removes build-tool attack vectors, and unlocks high-speed Metal-accelerated local inference directly from within containerized microservices.
 
+---
+
+# Decision 013: OpenRouter Model Selection (NVIDIA Nemotron 3 Ultra 550B Free Tier)
+
+## Context
+For the cloud tier using OpenRouter, users need a high-capacity model suitable for long-form synthesis (e.g. Ship 30 for 30 essays) that does not incur paid API costs during evaluation and development.
+
+## Options Considered
+
+### Option A: Proprietary Paid Tier (`anthropic/claude-3.7-sonnet` or `openai/gpt-4o`)
+- High-quality reasoning and writing prose.
+- Requires funded credit balance on OpenRouter; fails immediately if the developer or evaluator lacks funded credits.
+
+### Option B: Free-Tier High-Capacity Model (`nvidia/nemotron-3-ultra-550b-a55b:free`)
+- 550B parameter class model provided free of charge on OpenRouter.
+- Massive parameter capacity for long-form instruction following and deep growth framework synthesis.
+- Zero API cost barrier for evaluation and portfolio demonstration.
+- Compatible with standard OpenAI `/chat/completions` payload contract.
+
+## Decision
+We select **Option B: `nvidia/nemotron-3-ultra-550b-a55b:free`** as the default model for `OPENROUTER_MODEL` and `MODEL_FOR_ESSAY`.
+
+## Why
+Enables full long-form essay and artifact generation capabilities via OpenRouter without requiring paid credits, maximizing accessibility while maintaining high inference quality.
+
+## Trade-offs
+Free-tier endpoints on OpenRouter can encounter temporary rate limits (HTTP 429) during peak traffic hours. Our `TaskRouter` mitigates this by automatically catching rate limits and cascading down to local Ollama.
+
 
 
 

@@ -15,7 +15,7 @@ class OpenRouterProvider(BaseLLMProvider):
     (Claude 3.7 Sonnet, GPT-4o, Llama 3.3) for long-form essays and structured skills.
     """
 
-    def __init__(self, api_key: str, model_name: str = "anthropic/claude-3.7-sonnet"):
+    def __init__(self, api_key: str, model_name: str = "nvidia/nemotron-3-ultra-550b-a55b:free"):
         super().__init__(model_name=model_name)
         self.api_key = api_key.strip() if api_key else ""
         self.base_url = "https://openrouter.ai/api/v1/chat/completions"

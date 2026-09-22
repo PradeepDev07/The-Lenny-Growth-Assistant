@@ -37,6 +37,7 @@ services:
       - OLLAMA_MODEL=llama3.2:3b
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL:-nvidia/nemotron-3-ultra-550b-a55b:free}
       - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
     extra_hosts:
       - "host.docker.internal:host-gateway"

@@ -631,7 +631,7 @@ Build a responsive, modern Next.js / React frontend providing a dual-pane studio
 Fetch `ReadableStream` enables full HTTP POST streaming, and rigid viewport containers respect iframe origin isolation.
 
 ### Commit
-`feat: implement Next.js full-stack frontend with split-pane sandboxed artifact viewer`
+`565a204` — `feat: implement Next.js full-stack frontend with split-pane sandboxed artifact viewer`
 
 
 

@@ -28,7 +28,7 @@ class GeminiProvider(BaseLLMProvider):
         messages: List[LLMMessage],
         system_prompt: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 2048
+        max_tokens: int = 8192
     ) -> dict:
         contents = []
         for msg in messages:
@@ -43,7 +43,10 @@ class GeminiProvider(BaseLLMProvider):
             "contents": contents,
             "generationConfig": {
                 "temperature": temperature,
-                "maxOutputTokens": max_tokens
+                "maxOutputTokens": max_tokens,
+                "thinkingConfig": {
+                    "thinkingBudget": 0
+                }
             }
         }
 
@@ -59,7 +62,7 @@ class GeminiProvider(BaseLLMProvider):
         messages: List[LLMMessage],
         system_prompt: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 2048
+        max_tokens: int = 8192
     ) -> LLMResponse:
         if not self.api_key:
             raise ValueError("GEMINI_API_KEY is not configured")
@@ -68,7 +71,7 @@ class GeminiProvider(BaseLLMProvider):
         payload = self._build_payload(messages, system_prompt, temperature=temperature, max_tokens=max_tokens)
         start_time = time.perf_counter()
 
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=60.0) as client:
             resp = await client.post(url, json=payload)
             if resp.status_code != 200:
                 raise RuntimeError(f"Gemini API returned HTTP {resp.status_code}: {resp.text}")
@@ -104,7 +107,7 @@ class GeminiProvider(BaseLLMProvider):
         messages: List[LLMMessage],
         system_prompt: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 2048
+        max_tokens: int = 8192
     ) -> AsyncIterator[str]:
         if not self.api_key:
             raise ValueError("GEMINI_API_KEY is not configured")
@@ -112,7 +115,7 @@ class GeminiProvider(BaseLLMProvider):
         url = f"{self.base_url}/{self.model_name}:streamGenerateContent?alt=sse&key={self.api_key}"
         payload = self._build_payload(messages, system_prompt, temperature=temperature, max_tokens=max_tokens)
 
-        async with httpx.AsyncClient(timeout=45.0) as client:
+        async with httpx.AsyncClient(timeout=60.0) as client:
             async with client.stream("POST", url, json=payload) as response:
                 if response.status_code != 200:
                     error_text = await response.aread()

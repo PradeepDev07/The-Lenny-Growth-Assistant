@@ -169,8 +169,8 @@ async def stream_interactive_artifact(
     accumulated_tokens: List[str] = []
 
     try:
-        # 5. Stream HTML tokens
-        async for token in provider.stream(messages=messages, system_prompt=system_prompt):
+        # 5. Stream HTML tokens (using 8192 max_tokens to accommodate complete single-file apps)
+        async for token in provider.stream(messages=messages, system_prompt=system_prompt, max_tokens=8192):
             accumulated_tokens.append(token)
             payload = json.dumps({"token": token})
             yield f"data: {payload}\n\n"
@@ -182,7 +182,7 @@ async def stream_interactive_artifact(
             logger.info("Failing over artifact generation to local Ollama...")
             fallback_used = True
             provider = model_router.ollama
-            async for token in provider.stream(messages=messages, system_prompt=system_prompt):
+            async for token in provider.stream(messages=messages, system_prompt=system_prompt, max_tokens=8192):
                 accumulated_tokens.append(token)
                 payload = json.dumps({"token": token})
                 yield f"data: {payload}\n\n"
@@ -203,6 +203,14 @@ async def stream_interactive_artifact(
     if cleaned_html.endswith("```"):
         cleaned_html = cleaned_html[:-3]
     cleaned_html = cleaned_html.strip()
+
+    # Integrity safeguard: ensure closing tags exist to prevent broken iframe rendering
+    if "<body" in cleaned_html and "</body>" not in cleaned_html:
+        if "</script>" not in cleaned_html and "<script" in cleaned_html:
+            cleaned_html += "\n    </script>"
+        cleaned_html += "\n</body>\n</html>"
+    elif "<html" in cleaned_html and "</html>" not in cleaned_html:
+        cleaned_html += "\n</html>"
 
     model_info = {
         "provider": provider.__class__.__name__.lower().replace("provider", ""),

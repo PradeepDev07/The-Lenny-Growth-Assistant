@@ -19,7 +19,7 @@ class MockArtifactProvider(BaseLLMProvider):
     async def generate(self, messages: List[LLMMessage], system_prompt: str = ""):
         raise NotImplementedError()
 
-    async def stream(self, messages: List[LLMMessage], system_prompt: str = "") -> AsyncIterator[str]:
+    async def stream(self, messages: List[LLMMessage], system_prompt: str = "", **kwargs) -> AsyncIterator[str]:
         html_tokens = [
             "```html\n<!DOCTYPE html>\n<html>\n<head>\n",
             "<style>body { font-family: sans-serif; background: #0f172a; color: white; }</style>\n",

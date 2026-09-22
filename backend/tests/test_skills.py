@@ -16,7 +16,7 @@ class MockEssayProvider(BaseLLMProvider):
     async def generate(self, messages: List[LLMMessage], system_prompt: str = ""):
         raise NotImplementedError()
 
-    async def stream(self, messages: List[LLMMessage], system_prompt: str = "") -> AsyncIterator[str]:
+    async def stream(self, messages: List[LLMMessage], system_prompt: str = "", **kwargs) -> AsyncIterator[str]:
         tokens = [
             "# The Hidden Math of Growth Loops\n\n",
             "Most product teams obsess over top-of-funnel acquisition while hemorrhaging 80% of signups.\n\n",

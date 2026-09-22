@@ -758,6 +758,39 @@ Transform the frontend interface from a dark-slate developer dashboard into a sp
 - `pytest -v backend/tests/`: 33/33 tests passed in 0.79s.
 - Emoji audit script: Verified 0 emojis in frontend source code.
 
+---
+
+## Feature 11 — Fix Gemini Thinking Truncation & Add Active Artifact .md Format Viewer
+
+### Goal
+Eliminate generation truncation where Gemini 2.5 Flash cut off mid-CSS during interactive tool generation and produced 5-line responses, and implement an active artifact `.md` format viewer with monospace typography, line numbers, and a preview switcher.
+
+### Requirements
+- Fix Gemini 2.5 Flash token exhaustion caused by internal reasoning tokens consuming `maxOutputTokens`.
+- Configure `thinkingConfig.thinkingBudget = 0` in `GeminiProvider` to dedicate 100% of tokens to direct generation.
+- Raise `max_tokens` from `2048` to `8192` across `BaseLLMProvider`, `GeminiProvider`, and `OpenRouterProvider`.
+- Pass `max_tokens=8192` in `interactive.py` and `ship30.py`.
+- Add HTML tag closure safeguard in `interactive.py`.
+- Implement a dedicated `.md` format viewer in `frontend/src/components/ArtifactPane.tsx` with line numbers, monospace font, and a segmented control `[ .md Format ]` (active by default) / `[ Preview ]`.
+- Document the problem, investigation, and fix in `insights/DIFFICULTIES.md` as Problem 007.
+
+### Files Changed
+- `backend/app/llm/base.py`: Updated default `max_tokens` to `8192`.
+- `backend/app/llm/gemini_provider.py`: Added `thinkingBudget: 0`, increased `max_tokens` to `8192`, and updated timeout to 60s.
+- `backend/app/llm/openrouter_provider.py`: Updated default `max_tokens` to `8192`.
+- `backend/app/skills/interactive.py`: Passed `max_tokens=8192` and added HTML tag closure safeguard.
+- `backend/app/skills/ship30.py`: Passed `max_tokens=8192`.
+- `backend/tests/test_artifacts.py`: Updated mock provider stream signature to accept `**kwargs`.
+- `backend/tests/test_skills.py`: Updated mock provider stream signature to accept `**kwargs`.
+- `frontend/src/components/ArtifactPane.tsx`: Implemented `.md Format` view with line numbers, word count, and segmented preview toggle.
+- `insights/DIFFICULTIES.md`: Recorded Problem 007 detailing Gemini thinking token exhaustion and fix.
+
+### Tests
+- `pytest -v backend/tests/`: 33/33 tests passed in 1.06s.
+- `npm run build`: Next.js 14 compiled standalone bundle successfully with 0 errors.
+- Live Gemini API stream verification: Generated complete 8,546-character single-file HTML calculator with closing `</html>`.
+
+
 
 
 

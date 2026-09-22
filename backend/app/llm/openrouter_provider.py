@@ -37,7 +37,7 @@ class OpenRouterProvider(BaseLLMProvider):
         system_prompt: Optional[str] = None,
         stream: bool = False,
         temperature: float = 0.7,
-        max_tokens: int = 2048
+        max_tokens: int = 8192
     ) -> dict:
         formatted = []
         if system_prompt:
@@ -58,7 +58,7 @@ class OpenRouterProvider(BaseLLMProvider):
         messages: List[LLMMessage],
         system_prompt: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 2048
+        max_tokens: int = 8192
     ) -> LLMResponse:
         if not self.api_key:
             raise ValueError("OPENROUTER_API_KEY is not configured")
@@ -95,7 +95,7 @@ class OpenRouterProvider(BaseLLMProvider):
         messages: List[LLMMessage],
         system_prompt: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 2048
+        max_tokens: int = 8192
     ) -> AsyncIterator[str]:
         if not self.api_key:
             raise ValueError("OPENROUTER_API_KEY is not configured")

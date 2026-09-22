@@ -42,7 +42,7 @@ class BaseLLMProvider(ABC):
         messages: List[LLMMessage],
         system_prompt: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 2048
+        max_tokens: int = 8192
     ) -> LLMResponse:
         """Executes a non-streaming completion and returns normalized LLMResponse."""
         pass
@@ -53,7 +53,7 @@ class BaseLLMProvider(ABC):
         messages: List[LLMMessage],
         system_prompt: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: int = 2048
+        max_tokens: int = 8192
     ) -> AsyncIterator[str]:
         """Yields raw string tokens asynchronously as they arrive from the model."""
         pass

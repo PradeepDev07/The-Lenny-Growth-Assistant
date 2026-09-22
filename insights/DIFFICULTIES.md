@@ -141,5 +141,40 @@ In `frontend/Dockerfile`, explicitly copied:
 ### Lesson
 Next.js standalone deployments require manual inclusion of static assets and public directories alongside the standalone Node server bundle.
 
+---
+
+## Problem 007 — Gemini 2.5 Flash "Thinking Tax" Token Exhaustion & Truncated Code Artifacts
+
+### Symptom
+When generating an interactive tool or a Ship 30 essay using `gemini-2.5-flash`:
+1. The model generated only ~5 lines of text (409 characters) before abruptly terminating mid-sentence (`...churn-and-`).
+2. For interactive HTML artifacts, only "half the code" was generated (cutting off inside a CSS block `.kpi-grid { display: grid; grid-template`), leaving no `<body>` or `<script>` tags, causing the sandboxed `<iframe>` to render completely blank.
+
+### Expected
+The model should stream full, unabridged single-file HTML applications (8,000+ characters) with complete tags, reactive JavaScript, and full 1,250-word essays.
+
+### Investigation
+Database inspection of `growth_assistant.db` revealed that generation terminated with `finishReason: MAX_TOKENS` at exactly 2,048 tokens.
+Further API probing using direct REST requests revealed:
+- `gemini-2.5-flash` is a reasoning model that defaults to dynamic internal chain-of-thought generation (`thoughtsTokenCount`).
+- In Google's Generative Language API, **thinking tokens consume the `maxOutputTokens` quota**!
+- When Gemini generated 1,500–1,800 internal thinking tokens, it left only 200–300 tokens of remaining budget for visible output.
+- When generating complex single-file HTML/CSS/JS artifacts (which typically require ~2,500–4,000 tokens), the model exhausted its quota inside the `<style>` block and abruptly stopped without emitting the body or closing tags.
+
+### Fix
+1. **Disabled Thinking Token Deduction**: In `backend/app/llm/gemini_provider.py`, configured `generationConfig.thinkingConfig.thinkingBudget = 0` for direct code and content generation, dedicating 100% of tokens to visible output.
+2. **Quadrupled Output Token Ceiling**: Increased `max_tokens` default from `2048` to `8192` across `BaseLLMProvider`, `GeminiProvider`, and `OpenRouterProvider`.
+3. **Explicit Skill Stream Passing**: Updated `backend/app/skills/interactive.py` and `backend/app/skills/ship30.py` to pass `max_tokens=8192` explicitly to `provider.stream(...)`.
+4. **HTML Tag Closure Safeguard**: Added an integrity check in `interactive.py` that automatically appends closing `</script>`, `</body>`, and `</html>` tags if unexpected network termination occurs.
+5. **Active Artifact .md Viewer**: Updated `frontend/src/components/ArtifactPane.tsx` to display active Markdown artifacts directly in `.md` format with line numbers, monospace typography, and a toggle between `.md` format and rendered preview.
+
+### Verification
+- Tested live streaming with `thinkingBudget: 0` and `maxOutputTokens: 8192`: Gemini generated a complete, flawless 8,546-character single-file HTML application containing full CSS, DOM elements, and reactive JavaScript with `</html>` closed properly.
+- All 33 automated backend tests pass.
+
+### Lesson
+When integrating modern reasoning/thinking models (such as Gemini 2.5 Flash), internal reasoning tokens consume the output token ceiling. For code generation and long-form structured synthesis, either disable the thinking budget (`thinkingBudget: 0`) or dramatically raise `maxOutputTokens` (to 8,192+) to prevent premature token exhaustion.
+
+
 
 

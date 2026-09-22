@@ -179,8 +179,8 @@ async def stream_ship30_essay(
     accumulated_tokens: List[str] = []
 
     try:
-        # 5. Stream tokens
-        async for token in provider.stream(messages=messages, system_prompt=system_prompt):
+        # 5. Stream tokens (using 8192 max_tokens for full ~1,250-word depth)
+        async for token in provider.stream(messages=messages, system_prompt=system_prompt, max_tokens=8192):
             accumulated_tokens.append(token)
             payload = json.dumps({"token": token})
             yield f"data: {payload}\n\n"
@@ -192,7 +192,7 @@ async def stream_ship30_essay(
             logger.info("Failing over essay generation to local Ollama...")
             fallback_used = True
             provider = model_router.ollama
-            async for token in provider.stream(messages=messages, system_prompt=system_prompt):
+            async for token in provider.stream(messages=messages, system_prompt=system_prompt, max_tokens=8192):
                 accumulated_tokens.append(token)
                 payload = json.dumps({"token": token})
                 yield f"data: {payload}\n\n"

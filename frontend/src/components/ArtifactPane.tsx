@@ -15,7 +15,10 @@ import {
   ShieldCheck,
   Layers,
   Sparkles,
-  Wrench
+  Wrench,
+  FileCode,
+  Eye,
+  Play
 } from "lucide-react";
 
 interface ArtifactPaneProps {
@@ -31,6 +34,7 @@ export const ArtifactPane: React.FC<ArtifactPaneProps> = ({
 }) => {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<"preview" | "history">("preview");
+  const [viewFormat, setViewFormat] = useState<"md" | "preview">("md");
 
   const handleCopy = () => {
     if (!activeArtifact) return;
@@ -58,10 +62,12 @@ export const ArtifactPane: React.FC<ArtifactPaneProps> = ({
     ? activeArtifact.content.trim().split(/\s+/).filter(Boolean).length
     : 0;
 
+  const contentLines = activeArtifact ? activeArtifact.content.split("\n") : [];
+
   return (
     <div className="flex-1 flex flex-col h-full glass rounded-2xl md:rounded-3xl overflow-hidden min-w-0">
       {/* Top Controls Bar */}
-      <div className="h-14 border-b border-border-subtle px-4 flex items-center justify-between gap-3 shrink-0 bg-white/30 backdrop-blur-sm">
+      <div className="h-14 border-b border-border-subtle px-3 sm:px-4 flex items-center justify-between gap-2 shrink-0 bg-white/30 backdrop-blur-sm">
         <div className="flex items-center gap-1.5 p-1 rounded-xl glass-subtle">
           <button
             onClick={() => setActiveTab("preview")}
@@ -94,8 +100,39 @@ export const ArtifactPane: React.FC<ArtifactPaneProps> = ({
 
         {activeArtifact && activeTab === "preview" && (
           <div className="flex items-center gap-1.5 sm:gap-2">
+            {/* View Format Segmented Switcher (.md Format vs Rich Preview) */}
+            <div className="flex items-center p-0.5 rounded-xl glass-subtle">
+              <button
+                onClick={() => setViewFormat("md")}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition active:scale-95 ${
+                  viewFormat === "md"
+                    ? "bg-accent text-white shadow-sm font-semibold"
+                    : "text-text-secondary hover:text-text-primary hover:bg-white/60 font-medium"
+                }`}
+                title={activeArtifact.type === "html" ? "View HTML source" : "View raw text in .md format"}
+              >
+                <FileCode className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{activeArtifact.type === "html" ? "HTML Source" : ".md Format"}</span>
+                <span className="sm:hidden">.md</span>
+              </button>
+
+              <button
+                onClick={() => setViewFormat("preview")}
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition active:scale-95 ${
+                  viewFormat === "preview"
+                    ? "bg-accent text-white shadow-sm font-semibold"
+                    : "text-text-secondary hover:text-text-primary hover:bg-white/60 font-medium"
+                }`}
+                title={activeArtifact.type === "html" ? "View live interactive tool" : "View rich rendered preview"}
+              >
+                {activeArtifact.type === "html" ? <Play className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                <span className="hidden sm:inline">{activeArtifact.type === "html" ? "Live Tool" : "Preview"}</span>
+                <span className="sm:hidden">View</span>
+              </button>
+            </div>
+
             {activeArtifact.type === "markdown" && (
-              <span className="text-[11px] font-mono text-text-tertiary px-2.5 py-1 rounded-full bg-white/70 border border-border-subtle hidden sm:inline">
+              <span className="text-[11px] font-mono text-text-tertiary px-2.5 py-1 rounded-full bg-white/70 border border-border-subtle hidden xl:inline">
                 {wordCount} words
               </span>
             )}
@@ -103,11 +140,11 @@ export const ArtifactPane: React.FC<ArtifactPaneProps> = ({
             <button
               onClick={handleCopy}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium text-text-secondary hover:text-text-primary glass-subtle hover:bg-white/80 transition active:scale-95"
-              title="Copy to clipboard"
-              aria-label="Copy to clipboard"
+              title="Copy content"
+              aria-label="Copy content"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">{copied ? "Copied!" : "Copy"}</span>
+              <span className="hidden md:inline">{copied ? "Copied!" : "Copy"}</span>
             </button>
 
             <button
@@ -117,7 +154,7 @@ export const ArtifactPane: React.FC<ArtifactPaneProps> = ({
               aria-label="Download artifact"
             >
               <Download className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Export</span>
+              <span className="hidden md:inline">Export</span>
             </button>
 
             <a
@@ -128,7 +165,7 @@ export const ArtifactPane: React.FC<ArtifactPaneProps> = ({
               title="Open raw preview in new tab"
             >
               <ExternalLink className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Raw</span>
+              <span className="hidden md:inline">Raw</span>
             </a>
           </div>
         )}
@@ -191,14 +228,14 @@ export const ArtifactPane: React.FC<ArtifactPaneProps> = ({
               No Active Artifact
             </h3>
             <p className="text-xs text-text-secondary max-w-sm mb-6 leading-relaxed">
-              Generate a <strong>Ship 30 for 30 Essay</strong> (~1,250 words) or an{" "}
-              <strong>Interactive Calculator</strong> from Lenny's Podcast to preview it here.
+              Generate a <strong>Ship 30 for 30 Essay</strong> (~1,250 words in .md format) or an{" "}
+              <strong>Interactive Calculator</strong> from Lenny's Podcast to inspect and run it here.
             </p>
             <div className="flex flex-col gap-2.5 w-full max-w-xs text-left">
               <div className="p-3.5 rounded-2xl glass-elevated border border-white/80 text-xs">
                 <div className="flex items-center gap-1.5 font-semibold text-accent mb-1">
                   <FileText className="w-4 h-4 text-accent" />
-                  <span>Ship 30 Essay</span>
+                  <span>Ship 30 Essay (.md)</span>
                 </div>
                 <span className="text-[11px] text-text-tertiary leading-relaxed block">
                   Hook, 1-3-1 cadence, narrative, framework breakdown, 3 actionable takeaways.
@@ -216,32 +253,83 @@ export const ArtifactPane: React.FC<ArtifactPaneProps> = ({
             </div>
           </div>
         ) : activeArtifact.type === "html" ? (
-          /* Sandboxed HTML Iframe */
-          <div className="h-full flex flex-col">
-            <div className="px-4 py-2 border-b border-border-subtle bg-white/30 backdrop-blur-sm flex items-center justify-between text-[11px] text-text-tertiary font-mono">
-              <span className="flex items-center gap-1.5 text-success font-semibold">
-                <ShieldCheck className="w-3.5 h-3.5" /> Sandboxed Iframe (origin: null | CSP: connect-src 'none')
-              </span>
-              <span className="truncate max-w-[200px]">{activeArtifact.title}</span>
+          /* HTML Artifact View */
+          viewFormat === "preview" ? (
+            /* Sandboxed Live HTML Iframe */
+            <div className="h-full flex flex-col">
+              <div className="px-4 py-2 border-b border-border-subtle bg-white/30 backdrop-blur-sm flex items-center justify-between text-[11px] text-text-tertiary font-mono">
+                <span className="flex items-center gap-1.5 text-success font-semibold">
+                  <ShieldCheck className="w-3.5 h-3.5" /> Sandboxed Iframe (origin: null | CSP: connect-src 'none')
+                </span>
+                <span className="truncate max-w-[200px]">{activeArtifact.title}</span>
+              </div>
+              <div className="flex-1 w-full bg-white relative">
+                <iframe
+                  title={activeArtifact.title}
+                  sandbox="allow-scripts"
+                  src={`${API_BASE}/api/artifacts/${activeArtifact.id}/raw`}
+                  className="w-full h-full border-0 absolute inset-0"
+                />
+              </div>
             </div>
-            <div className="flex-1 w-full bg-white relative">
-              <iframe
-                title={activeArtifact.title}
-                sandbox="allow-scripts"
-                src={`${API_BASE}/api/artifacts/${activeArtifact.id}/raw`}
-                className="w-full h-full border-0 absolute inset-0"
-              />
+          ) : (
+            /* HTML Source Code View */
+            <div className="h-full overflow-y-auto p-4 font-mono text-xs leading-relaxed bg-white/50 select-text">
+              <div className="flex">
+                <div className="select-none text-text-tertiary/40 pr-3 border-r border-border-subtle text-right text-[11px]">
+                  {contentLines.map((_, i) => (
+                    <div key={i}>{i + 1}</div>
+                  ))}
+                </div>
+                <pre className="pl-3 overflow-x-auto whitespace-pre-wrap text-text-primary flex-1 font-mono">
+                  {activeArtifact.content}
+                </pre>
+              </div>
             </div>
-          </div>
+          )
         ) : (
-          /* Rendered Markdown Essay */
-          <div className="h-full overflow-y-auto p-6 sm:p-8 text-xs leading-relaxed font-sans">
-            <div className="max-w-2xl mx-auto prose prose-sm prose-headings:font-semibold prose-headings:text-text-primary prose-p:text-text-secondary prose-p:leading-relaxed prose-li:text-text-secondary prose-strong:text-text-primary prose-code:text-accent prose-code:bg-accent-soft prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-blockquote:border-l-accent prose-blockquote:text-text-secondary">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {activeArtifact.content}
-              </ReactMarkdown>
+          /* Markdown Artifact View */
+          viewFormat === "md" ? (
+            /* Raw .md Format View with Line Numbers & Monospace Font */
+            <div className="h-full overflow-y-auto p-4 sm:p-6 select-text">
+              <div className="max-w-4xl mx-auto glass-elevated rounded-2xl border border-white/90 p-4 sm:p-6 shadow-sm">
+                <div className="flex items-center justify-between pb-3 mb-4 border-b border-border-subtle">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded bg-accent-soft text-accent text-[11px] font-mono font-semibold border border-accent-border">
+                      .md Format
+                    </span>
+                    <span className="text-xs font-semibold text-text-primary">{activeArtifact.title}</span>
+                  </div>
+                  <span className="text-[11px] font-mono text-text-tertiary">
+                    {contentLines.length} lines • {wordCount} words
+                  </span>
+                </div>
+
+                <div className="flex text-xs font-mono leading-relaxed">
+                  {/* Line Numbers Gutter */}
+                  <div className="select-none text-text-tertiary/40 pr-3 mr-3 border-r border-border-subtle text-right text-[11px] shrink-0">
+                    {contentLines.map((_, i) => (
+                      <div key={i}>{i + 1}</div>
+                    ))}
+                  </div>
+
+                  {/* Raw Markdown Source Content */}
+                  <div className="flex-1 overflow-x-auto whitespace-pre-wrap text-text-primary font-mono select-text">
+                    {activeArtifact.content}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            /* Rich Rendered Preview */
+            <div className="h-full overflow-y-auto p-6 sm:p-8 text-xs leading-relaxed font-sans select-text">
+              <div className="max-w-2xl mx-auto prose prose-sm prose-headings:font-semibold prose-headings:text-text-primary prose-p:text-text-secondary prose-p:leading-relaxed prose-li:text-text-secondary prose-strong:text-text-primary prose-code:text-accent prose-code:bg-accent-soft prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-blockquote:border-l-accent prose-blockquote:text-text-secondary">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {activeArtifact.content}
+                </ReactMarkdown>
+              </div>
+            </div>
+          )
         )}
       </div>
     </div>

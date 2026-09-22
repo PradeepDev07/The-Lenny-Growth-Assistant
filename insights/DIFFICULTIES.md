@@ -104,4 +104,42 @@ Reran pytest: all authentic queries (Brian Balfour, Elena Verna, Shreyas Doshi, 
 ### Lesson
 Lexical keyword search without query term coverage guards is prone to single-word accidental matches. Enforcing minimum term coverage for multi-word queries eliminates spurious false-positive retrievals.
 
+---
+
+## Problem 005 — Local LLM Weight Loading Latency & Streaming Timeouts
+
+### Symptom
+When sending streaming chat or essay requests to a newly launched Ollama daemon, the initial HTTP connection timed out with `httpx.ReadTimeout` before the first token was generated.
+
+### Root Cause
+When Ollama loads model weights (e.g. `llama3.2:3b` at 2.0 GB) into unified RAM from disk, there is a 10–20 second initialization delay where no HTTP chunks are emitted. A default scalar `httpx.Timeout(5.0)` assumes the server responds immediately and prematurely aborts the connection.
+
+### Fix
+Configured granular, multi-stage timeout parameters in `backend/app/llm/ollama_provider.py`:
+`timeout = httpx.Timeout(connect=20.0, read=180.0, write=30.0, pool=30.0)`
+This allows sufficient headroom for model weight loading and long-form essay generation while quickly failing if the daemon itself is down.
+
+### Lesson
+Local LLM inference requires decoupling initial connection/weight-loading timeouts from incremental inter-token read timeouts.
+
+---
+
+## Problem 006 — Next.js Standalone Build Missing Static Assets in Docker
+
+### Symptom
+When packaging Next.js in a minimal Alpine runner container, the application failed to start with missing static chunk errors (`ENOENT: .next/static`).
+
+### Root Cause
+Next.js `output: "standalone"` traces and bundles all required server node modules into `.next/standalone`, but intentionally excludes `.next/static` and `public/` to keep container layers modular (allowing static assets to be offloaded to a CDN in production).
+
+### Fix
+In `frontend/Dockerfile`, explicitly copied:
+1. `COPY --from=builder /app/public ./public`
+2. `COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./`
+3. `COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static`
+
+### Lesson
+Next.js standalone deployments require manual inclusion of static assets and public directories alongside the standalone Node server bundle.
+
+
 

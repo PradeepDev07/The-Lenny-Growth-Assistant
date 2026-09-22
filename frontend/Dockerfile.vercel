@@ -1,0 +1,61 @@
+# ==============================================================================
+# The Lenny Growth Assistant — Vercel / Production Next.js Dockerfile
+# Optimized multi-stage build for standalone Next.js deployment
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Stage 1: Dependency resolution and caching
+# ------------------------------------------------------------------------------
+FROM node:20-alpine AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Copy dependency manifests
+COPY package.json package-lock.json ./
+RUN npm ci || npm install
+
+# ------------------------------------------------------------------------------
+# Stage 2: Application compilation
+# ------------------------------------------------------------------------------
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+# Copy resolved node_modules from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Accept build-time arguments for Next.js public variables
+ARG NEXT_PUBLIC_API_URL="https://lennygrowth.pradeepleadsystems.in"
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+
+# Compile Next.js with standalone output
+RUN npm run build
+
+# ------------------------------------------------------------------------------
+# Stage 3: Minimal production runner
+# ------------------------------------------------------------------------------
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Create unprivileged service user and group
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Copy standalone distribution bundle and public assets
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+CMD ["node", "server.js"]

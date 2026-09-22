@@ -6,6 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "start:standalone": "node .next/standalone/server.js",
+    "docker:build:vercel": "docker build -f Dockerfile.vercel -t frontend-vercel .",
     "lint": "next lint"
   },
   "dependencies": {
@@ -17,6 +19,8 @@
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
+    "@emnapi/core": "^1.11.3",
+    "@emnapi/runtime": "^1.11.3",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
